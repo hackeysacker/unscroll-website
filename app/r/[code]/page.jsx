@@ -1,11 +1,8 @@
-"use client";
+import { redirect } from 'next/navigation';
 
-import { useEffect } from "react";
+// Use edge runtime for Cloudflare Pages
+export const runtime = 'edge';
 
 export default function ReferralRedirect({ params }) {
-  useEffect(() => {
-    window.location.href = `/early?ref=${params.code}`;
-  }, [params.code]);
-
-  return <div>Redirecting...</div>;
+  redirect(`/early?ref=${params.code}`);
 }
