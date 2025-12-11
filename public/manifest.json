@@ -1,0 +1,23 @@
+{
+  "short_name": "FocusFlow",
+  "name": "FocusFlow - Train Your Attention",
+  "description": "Gamified attention training app with daily 2-3 minute challenges to improve focus and impulse control",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "type": "image/x-icon",
+      "sizes": "256x256"
+    },
+    {
+      "src": "creao_icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}

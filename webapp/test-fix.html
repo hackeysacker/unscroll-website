@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Progress Tree Fix</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-case {
+      background: white;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .test-case h3 {
+      margin-top: 0;
+      color: #333;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    .danger {
+      background: #f44336;
+    }
+    .danger:hover {
+      background: #da190b;
+    }
+    .result {
+      background: #e7f3ff;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 4px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔧 Progress Tree Fix Test Suite</h1>
+  <p>Use these tests to verify the "0/0" bug fix works correctly.</p>
+
+  <div class="test-case">
+    <h3>Test 1: Check Current Progress Tree</h3>
+    <p>View the current progress tree stored in localStorage</p>
+    <button onclick="checkCurrentTree()">Check Current Tree</button>
+    <div id="result1" class="result"></div>
+  </div>
+
+  <div class="test-case">
+    <h3>Test 2: Simulate Corrupted Data (No Version)</h3>
+    <p>Create progress tree data without a version field (old format)</p>
+    <button onclick="simulateOldData()">Simulate Old Data</button>
+    <button onclick="location.reload()" class="danger">Reload to Test Migration</button>
+    <div id="result2" class="result"></div>
+  </div>
+
+  <div class="test-case">
+    <h3>Test 3: Simulate Empty Nodes</h3>
+    <p>Create progress tree with empty nodes array</p>
+    <button onclick="simulateEmptyNodes()">Simulate Empty Nodes</button>
+    <button onclick="location.reload()" class="danger">Reload to Test Migration</button>
+    <div id="result3" class="result"></div>
+  </div>
+
+  <div class="test-case">
+    <h3>Test 4: Clear All Data & Restart</h3>
+    <p>⚠️ This will clear all localStorage and reload the app</p>
+    <button onclick="clearAndRestart()" class="danger">Clear & Restart</button>
+  </div>
+
+  <script>
+    function checkCurrentTree() {
+      const tree = localStorage.getItem('focusflow_progress_tree');
+      const result = document.getElementById('result1');
+
+      if (!tree) {
+        result.textContent = '❌ No progress tree found in localStorage';
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(tree);
+        result.textContent = `✅ Progress Tree Found:\n\n` +
+          `Version: ${parsed.version || 'MISSING (OLD FORMAT)'}\n` +
+          `User ID: ${parsed.userId}\n` +
+          `Total Nodes: ${Array.isArray(parsed.nodes) ? parsed.nodes.length : 'NOT AN ARRAY'}\n` +
+          `Current Node: ${parsed.currentNodeId}\n` +
+          `Last Completed: ${parsed.lastCompletedNodeId || 'none'}\n\n` +
+          `Level 1 Nodes: ${Array.isArray(parsed.nodes) ? parsed.nodes.filter(n => n.level === 1).length : 'N/A'}\n` +
+          `Level 1 Exercises: ${Array.isArray(parsed.nodes) ? parsed.nodes.filter(n => n.level === 1 && n.nodeType === 'exercise').length : 'N/A'}`;
+      } catch (e) {
+        result.textContent = `❌ Error parsing tree: ${e.message}`;
+      }
+    }
+
+    function simulateOldData() {
+      const oldTree = {
+        userId: 'test-user',
+        nodes: Array.from({ length: 630 }, (_, i) => ({
+          id: `${Math.floor(i/21) + 1}-${i % 21}`,
+          level: Math.floor(i/21) + 1,
+          position: i % 21,
+          nodeType: (i % 21 === 20) ? 'test' : 'exercise',
+          challengeType: 'gaze_hold',
+          status: i === 0 ? 'available' : 'locked',
+          xpReward: 10,
+          starsEarned: 0
+        })),
+        currentNodeId: '1-0',
+        lastCompletedNodeId: null
+        // NO VERSION FIELD - simulates old data
+      };
+
+      localStorage.setItem('focusflow_progress_tree', JSON.stringify(oldTree));
+      document.getElementById('result2').textContent =
+        `✅ Created old-format tree (no version field)\n` +
+        `Total nodes: ${oldTree.nodes.length}\n\n` +
+        `Click "Reload to Test Migration" to verify auto-migration works.`;
+    }
+
+    function simulateEmptyNodes() {
+      const emptyTree = {
+        userId: 'test-user',
+        nodes: [], // EMPTY NODES ARRAY
+        currentNodeId: null,
+        lastCompletedNodeId: null,
+        version: 1
+      };
+
+      localStorage.setItem('focusflow_progress_tree', JSON.stringify(emptyTree));
+      document.getElementById('result3').textContent =
+        `✅ Created tree with empty nodes array\n\n` +
+        `Click "Reload to Test Migration" to verify regeneration works.`;
+    }
+
+    function clearAndRestart() {
+      if (confirm('⚠️ This will clear ALL localStorage data. Continue?')) {
+        localStorage.clear();
+        alert('✅ Data cleared! Reloading...');
+        location.reload();
+      }
+    }
+  </script>
+</body>
+</html>

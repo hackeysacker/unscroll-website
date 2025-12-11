@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx expo start:*)",
+      "Bash(timeout /t 15)",
+      "Bash(npx expo install:*)",
+      "Bash(npm install:*)",
+      "Bash(taskkill:*)",
+      "Bash(test:*)",
+      "Bash(timeout /t 8)",
+      "Bash(dir \"c:\\Users\\ivw20\\Desktop\\ai attention app\\mobile\" /b)",
+      "Bash(npx create-next-app:*)",
+      "Bash(del \"c:\\Users\\ivw20\\Desktop\\ai attention app\\mobile\\src\\components\\SimpleProgressPath.tsx\")",
+      "Bash(dir:*)",
+      "Bash(npm run start)",
+      "Bash(npx tsc:*)",
+      "Bash(ls:*)",
+      "Bash(for file in FingerHoldChallenge.tsx SlowTrackingChallenge.tsx GazeHoldChallenge.tsx RhythmTapChallenge.tsx ReactionInhibitionChallenge.tsx FingerTracingChallenge.tsx MultiObjectTrackingChallenge.tsx FakeNotificationsChallenge.tsx LookAwayChallenge.tsx MovingTargetChallenge.tsx TapPatternChallenge.tsx DelayUnlockChallenge.tsx PopupIgnoreChallenge.tsx StillnessTestChallenge.tsx MultiTaskTapChallenge.tsx ImpulseSpikeTestChallenge.tsx ResetChallenge.tsx)",
+      "Bash(do sed -i \"s/const \\[isActive, setIsActive\\] = useState(false);/const [isActive, setIsActive] = useState(true); \\/\\/ Auto-start since we now have ActivityDetailScreen/g\" \"$file\")",
+      "Bash(done)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(node -e:*)",
+      "Bash(del AntiScrollSwipeChallenge.tsx LookAwayChallenge.tsx ResetChallenge.tsx)",
+      "Bash(del \"c:\\Users\\ivw20\\Desktop\\ai attention app\\mobile\\src\\components\\DuolingoHome.tsx\")",
+      "Bash(timeout /t 2)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(npm start)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

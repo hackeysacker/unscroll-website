@@ -1,0 +1,14 @@
+src/components/onboarding/AttentionBaselineTest.tsx(162,5): error TS1005: ')' expected.
+src/components/onboarding/AttentionBaselineTest.tsx(163,5): error TS1109: Expression expected.
+src/components/onboarding/DynamicPlanCreation.tsx(109,7): error TS17002: Expected corresponding JSX closing tag for 'main'.
+src/components/onboarding/EmotionalMomentum.tsx(100,7): error TS17002: Expected corresponding JSX closing tag for 'main'.
+src/components/onboarding/FinalConfirmation.tsx(85,7): error TS17002: Expected corresponding JSX closing tag for 'main'.
+src/components/onboarding/FirstUpsell.tsx(86,7): error TS17002: Expected corresponding JSX closing tag for 'main'.
+src/components/onboarding/FirstWin.tsx(90,7): error TS17002: Expected corresponding JSX closing tag for 'main'.
+src/components/onboarding/HabitGraph.tsx(161,7): error TS17002: Expected corresponding JSX closing tag for 'main'.
+src/components/onboarding/HabitIntake.tsx(158,13): error TS17002: Expected corresponding JSX closing tag for 'section'.
+src/components/onboarding/PermissionRequests.tsx(154,7): error TS17002: Expected corresponding JSX closing tag for 'main'.
+src/components/onboarding/PersonalGoalBuilder.tsx(132,9): error TS17002: Expected corresponding JSX closing tag for 'main'.
+src/components/onboarding/PersonalGoalBuilder.tsx(133,5): error TS1005: ')' expected.
+src/components/onboarding/PersonalGoalBuilder.tsx(134,3): error TS1109: Expression expected.
+src/components/onboarding/UserTypeTag.tsx(89,7): error TS17002: Expected corresponding JSX closing tag for 'main'.
