@@ -22,19 +22,35 @@ export default function EarlyPage() {
   async function joinWaitlist() {
     if (!email) return;
     setLoading(true);
-    await fetch("/api/waitlist/join", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email,
-        signupSource: "waitlist",
-        marketingSource: params.src,
-        marketingCampaign: params.campaign,
-        referralCodeUsed: params.ref,
-      }),
-    });
-    setLoading(false);
-    setSubmitted(true);
+    try {
+      const response = await fetch("/api/waitlist/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          signupSource: "waitlist",
+          marketingSource: params.src,
+          marketingCampaign: params.campaign,
+          referralCodeUsed: params.ref,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!data.ok) {
+        console.error('Waitlist error:', data.error);
+        alert(`Error: ${data.error || 'Failed to join waitlist. Please try again.'}`);
+        setLoading(false);
+        return;
+      }
+      
+      setLoading(false);
+      setSubmitted(true);
+    } catch (error) {
+      console.error('Waitlist join error:', error);
+      alert('Network error. Please check your connection and try again.');
+      setLoading(false);
+    }
   }
 
   if (submitted) {

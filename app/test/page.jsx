@@ -24,14 +24,20 @@ export default function TestPage() {
   const reactionStartRef = useRef(0);
   const reactionTimeoutRef = useRef(null);
 
-  // Pattern memory test
-  const [pattern, setPattern] = useState([]);
-  const [userPattern, setUserPattern] = useState([]);
-  const [showingPattern, setShowingPattern] = useState(false);
-  const [patternRound, setPatternRound] = useState(0);
-  const [correctPatterns, setCorrectPatterns] = useState(0);
-  const [wrongPatterns, setWrongPatterns] = useState(0);
-  const patternTimeoutRef = useRef(null);
+  // Distraction resistance test
+  const [distractionRound, setDistractionRound] = useState(0);
+  const [targetColor, setTargetColor] = useState('blue');
+  const [distractions, setDistractions] = useState([]);
+  const [targetVisible, setTargetVisible] = useState(false);
+  const [distractionClicks, setDistractionClicks] = useState(0);
+  const [correctClicks, setCorrectClicks] = useState(0);
+  const [missedTargets, setMissedTargets] = useState(0);
+  const [responseTimes, setResponseTimes] = useState([]);
+  const targetStartRef = useRef(0);
+  const distractionTestTimeoutRef = useRef(null);
+  const targetTimeoutRef = useRef(null);
+  const distractionIntervalRef = useRef(null);
+  const targetClickedRef = useRef(false);
 
   // Feedback
   const [feedback, setFeedback] = useState("");
@@ -50,7 +56,9 @@ export default function TestPage() {
     return () => {
       if (holdTimerRef.current) clearInterval(holdTimerRef.current);
       if (reactionTimeoutRef.current) clearTimeout(reactionTimeoutRef.current);
-      if (patternTimeoutRef.current) clearTimeout(patternTimeoutRef.current);
+      if (distractionTestTimeoutRef.current) clearTimeout(distractionTestTimeoutRef.current);
+      if (targetTimeoutRef.current) clearTimeout(targetTimeoutRef.current);
+      if (distractionIntervalRef.current) clearInterval(distractionIntervalRef.current);
     };
   }, []);
 
@@ -129,7 +137,7 @@ export default function TestPage() {
       }
 
       if (currentReaction >= 2) {
-        setTimeout(() => startPatternTest(), 1000);
+        setTimeout(() => startDistractionTest(), 1000);
       } else {
         setTimeout(() => nextReactionRound(), 800);
       }
@@ -140,65 +148,127 @@ export default function TestPage() {
     }
   };
 
-  // === PATTERN MEMORY TEST ===
-  const startPatternTest = () => {
-    setPhase("pattern");
+  // === DISTRACTION RESISTANCE TEST ===
+  const startDistractionTest = () => {
+    setPhase("distraction");
     setProgress(70);
-    setCorrectPatterns(0);
-    setWrongPatterns(0);
-    setPatternRound(0);
-    nextPatternRound();
+    setDistractionClicks(0);
+    setCorrectClicks(0);
+    setMissedTargets(0);
+    setResponseTimes([]);
+    setDistractionRound(0);
+    setDistractions([]);
+    setTargetVisible(false);
+    setTargetColor('blue');
+    nextDistractionRound();
   };
 
-  const generatePattern = (length) => {
-    const newPattern = [];
-    for (let i = 0; i < length; i++) {
-      newPattern.push(Math.floor(Math.random() * 9));
-    }
-    return newPattern;
+  const generateDistraction = () => {
+    const types = ['notification', 'popup', 'alert', 'badge'];
+    return {
+      id: Date.now() + Math.random(),
+      x: Math.random() * 80 + 10, // 10-90% of screen width
+      y: Math.random() * 60 + 20, // 20-80% of screen height
+      type: types[Math.floor(Math.random() * types.length)]
+    };
   };
 
-  const nextPatternRound = () => {
-    if (patternRound >= 5) {
+  const nextDistractionRound = () => {
+    if (distractionRound >= 6) {
       finishTest();
       return;
     }
 
-    setUserPattern([]);
-    const patternLength = 3 + patternRound; // Start with 3, increase each round
-    const newPattern = generatePattern(patternLength);
-    setPattern(newPattern);
-    setShowingPattern(true);
+    // Clear previous timeouts
+    if (distractionTestTimeoutRef.current) {
+      clearTimeout(distractionTestTimeoutRef.current);
+    }
+    if (targetTimeoutRef.current) {
+      clearTimeout(targetTimeoutRef.current);
+    }
+    if (distractionIntervalRef.current) {
+      clearInterval(distractionIntervalRef.current);
+    }
 
-    // Show pattern for 2 seconds
-    patternTimeoutRef.current = setTimeout(() => {
-      setShowingPattern(false);
-      setPatternRound(prev => prev + 1);
-    }, 1500 + (patternLength * 400));
+    setDistractions([]);
+    setTargetVisible(false);
+
+    // Start showing distractions
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => {
+        const dist = generateDistraction();
+        setDistractions(prev => [...prev, dist]);
+      }, i * 600);
+    }
+
+    // Show target after 2 seconds
+    targetClickedRef.current = false;
+    distractionTestTimeoutRef.current = setTimeout(() => {
+      setTargetColor(Math.random() < 0.5 ? 'blue' : 'green');
+      setTargetVisible(true);
+      targetStartRef.current = Date.now();
+
+      // Hide target after 1.5 seconds if not clicked
+      targetTimeoutRef.current = setTimeout(() => {
+        if (!targetClickedRef.current) {
+          setMissedTargets(prev => prev + 1);
+          showQuickFeedback("⏱️ Missed target!", "error");
+          setTargetVisible(false);
+          setDistractionRound(prev => prev + 1);
+          setTimeout(() => nextDistractionRound(), 1000);
+        }
+      }, 1500);
+    }, 2000);
+
+    // Keep adding distractions every 1.5 seconds
+    distractionIntervalRef.current = setInterval(() => {
+      const dist = generateDistraction();
+      setDistractions(prev => {
+        // Remove old distractions (keep max 5)
+        const updated = [...prev, dist];
+        return updated.slice(-5);
+      });
+    }, 1500);
   };
 
-  const handleCellClick = (index) => {
-    if (showingPattern) return;
+  const handleDistractionClick = (id) => {
+    // User clicked a distraction - bad!
+    setDistractionClicks(prev => prev + 1);
+    setDistractions(prev => prev.filter(d => d.id !== id));
+    showQuickFeedback("❌ Distracted!", "error");
+  };
 
-    const newUserPattern = [...userPattern, index];
-    setUserPattern(newUserPattern);
+  const handleTargetClick = () => {
+    if (!targetVisible) return;
 
-    // Check if pattern matches so far
-    const isCorrect = pattern[newUserPattern.length - 1] === index;
+    targetClickedRef.current = true;
 
-    if (!isCorrect) {
-      setWrongPatterns(prev => prev + 1);
-      showQuickFeedback("✗ Wrong pattern!", "error");
-      setTimeout(() => nextPatternRound(), 1000);
-      return;
+    // Clear timeout
+    if (targetTimeoutRef.current) {
+      clearTimeout(targetTimeoutRef.current);
     }
 
-    // Check if pattern is complete
-    if (newUserPattern.length === pattern.length) {
-      setCorrectPatterns(prev => prev + 1);
-      showQuickFeedback("✓ Perfect memory!", "success");
-      setTimeout(() => nextPatternRound(), 1000);
+    const responseTime = Date.now() - targetStartRef.current;
+    setResponseTimes(prev => [...prev, responseTime]);
+    setCorrectClicks(prev => prev + 1);
+    setTargetVisible(false);
+
+    if (responseTime < 500) {
+      showQuickFeedback("⚡ Perfect focus!", "success");
+    } else if (responseTime < 800) {
+      showQuickFeedback("✓ Good!", "success");
+    } else {
+      showQuickFeedback("✓ Got it!", "success");
     }
+
+    // Clear all distractions
+    setDistractions([]);
+    if (distractionIntervalRef.current) {
+      clearInterval(distractionIntervalRef.current);
+    }
+
+    setDistractionRound(prev => prev + 1);
+    setTimeout(() => nextDistractionRound(), 1200);
   };
 
   // === FINISH TEST ===
@@ -209,9 +279,12 @@ export default function TestPage() {
     const focusScore = Math.max(0, Math.min(100, (holdTime / 8000) * 100 - focusBreaks * 15));
     const avgReaction = reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length || 400;
     const reactionScore = Math.max(0, 100 - (avgReaction - 150) / 3);
-    const memoryAccuracy = correctPatterns / 5;
-    const memoryPenalty = wrongPatterns * 15;
-    const memoryScore = Math.max(0, memoryAccuracy * 100 - memoryPenalty);
+    const distractionResistance = Math.max(0, 100 - (distractionClicks * 20));
+    const targetAccuracy = correctClicks / 6;
+    const avgResponseTime = responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length || 1000;
+    const responseTimeScore = Math.max(0, 100 - (avgResponseTime - 400) / 8);
+    const missedPenalty = missedTargets * 15;
+    const memoryScore = Math.max(0, (distractionResistance * 0.5 + targetAccuracy * 100 * 0.3 + responseTimeScore * 0.2) - missedPenalty);
 
     const finalScore = Math.round((focusScore * 0.35 + reactionScore * 0.35 + memoryScore * 0.30));
     setScore(Math.min(100, Math.max(0, finalScore)));
@@ -321,7 +394,7 @@ export default function TestPage() {
               <div style={{ fontSize: '15px', color: 'var(--text-secondary)', lineHeight: '2' }}>
                 🎯 <strong style={{color: 'var(--text-primary)'}}>Focus Endurance</strong> – Can you hold attention?<br/>
                 ⚡ <strong style={{color: 'var(--text-primary)'}}>Reaction Speed</strong> – How fast is your brain?<br/>
-                🧠 <strong style={{color: 'var(--text-primary)'}}>Pattern Memory</strong> – Can you remember sequences?
+                🚫 <strong style={{color: 'var(--text-primary)'}}>Distraction Resistance</strong> – Can you ignore distractions?
               </div>
             </div>
 
@@ -523,83 +596,170 @@ export default function TestPage() {
     );
   }
 
-  // === IMPULSE CONTROL TEST ===
-  if (phase === "pattern") {
+  // === DISTRACTION RESISTANCE TEST ===
+  if (phase === "distraction") {
     return (
       <>
         <ProgressBar />
         <FeedbackPopup />
-        <div className="container">
-          <div className="flex flex-col items-center justify-center text-center" style={{ flex: 1 }}>
-            <div className="animate-fadeIn">
-              <h2 style={{ marginBottom: '12px', fontSize: '28px' }}>Pattern Memory</h2>
-              <p style={{ marginBottom: '24px', fontSize: '16px' }}>
-                {showingPattern ? (
-                  <>Watch the <span style={{color: 'var(--primary)', fontWeight: '700'}}>PATTERN</span> carefully!</>
-                ) : (
-                  <>Tap the cells in the <span style={{color: 'var(--primary)', fontWeight: '700'}}>SAME ORDER</span></>
-                )}
+        <div className="container" style={{ position: 'relative', overflow: 'hidden' }}>
+          <div className="flex flex-col items-center justify-center text-center" style={{ flex: 1, minHeight: '100vh', padding: '20px' }}>
+            <div className="animate-fadeIn" style={{width: '100%', maxWidth: '500px', position: 'relative'}}>
+              <h2 style={{ marginBottom: '12px', fontSize: '28px' }}>Distraction Resistance</h2>
+              <p style={{ marginBottom: '8px', fontSize: '16px', color: 'var(--text-secondary)' }}>
+                Round {distractionRound + 1} of 6
               </p>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '32px' }}>
-                Round {patternRound} of 5 • Pattern Length: {pattern.length}
-              </p>
-
-              {/* 3x3 Grid */}
+              
+              {/* Instructions */}
               <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '12px',
-                maxWidth: '280px',
-                margin: '0 auto 32px'
+                marginBottom: '32px',
+                padding: '16px 20px',
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '2px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '16px',
+                fontSize: '16px',
+                fontWeight: '600',
+                color: 'var(--text-primary)'
               }}>
-                {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((index) => {
-                  const isInPattern = showingPattern && pattern.includes(index);
-                  const isCurrentHighlight = showingPattern && pattern[userPattern.length] === index;
-                  const wasClicked = userPattern.includes(index);
-
-                  return (
-                    <div
-                      key={index}
-                      onClick={() => handleCellClick(index)}
-                      style={{
-                        width: '85px',
-                        height: '85px',
-                        borderRadius: '12px',
-                        background: isInPattern ? 'var(--primary)' :
-                                   wasClicked ? 'var(--success)' :
-                                   'var(--bg-card)',
-                        border: '2px solid var(--border)',
-                        cursor: showingPattern ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.2s ease',
-                        boxShadow: isInPattern ? '0 0 30px rgba(99, 102, 241, 0.6)' : 'none',
-                        opacity: showingPattern && !isInPattern ? 0.3 : 1,
-                        animation: isCurrentHighlight ? 'pulse 0.5s ease-in-out' : 'none'
-                      }}
-                    />
-                  );
-                })}
+                🎯 Click the <span style={{color: targetColor === 'blue' ? '#3B82F6' : '#10B981', fontWeight: '800'}}>{targetColor.toUpperCase()}</span> circle when it appears<br/>
+                🚫 <span style={{color: 'var(--error)'}}>IGNORE</span> all distractions!
               </div>
 
+              {/* Central target */}
+              <div style={{
+                position: 'relative',
+                width: '200px',
+                height: '200px',
+                margin: '40px auto',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                {targetVisible ? (
+                  <div
+                    onClick={handleTargetClick}
+                    style={{
+                      width: '120px',
+                      height: '120px',
+                      borderRadius: '50%',
+                      background: targetColor === 'blue'
+                        ? 'linear-gradient(135deg, #3B82F6, #2563EB)'
+                        : 'linear-gradient(135deg, #10B981, #059669)',
+                      boxShadow: `0 0 50px ${targetColor === 'blue' ? 'rgba(59, 130, 246, 0.8)' : 'rgba(16, 185, 129, 0.8)'}`,
+                      cursor: 'pointer',
+                      animation: 'pulse 0.8s ease-in-out infinite',
+                      transition: 'all 0.2s ease',
+                      border: '4px solid white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '48px',
+                      fontWeight: '800',
+                      color: 'white'
+                    }}
+                    onMouseDown={(e) => {
+                      e.currentTarget.style.transform = 'scale(0.9)';
+                    }}
+                    onMouseUp={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }}
+                  >
+                    🎯
+                  </div>
+                ) : (
+                  <div style={{
+                    width: '120px',
+                    height: '120px',
+                    borderRadius: '50%',
+                    background: 'var(--bg-dark)',
+                    border: '3px dashed var(--border)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '32px',
+                    color: 'var(--text-secondary)'
+                  }}>
+                    ⏳
+                  </div>
+                )}
+              </div>
+
+              {/* Distractions overlay */}
+              {distractions.map((dist) => (
+                <div
+                  key={dist.id}
+                  onClick={() => handleDistractionClick(dist.id)}
+                  style={{
+                    position: 'absolute',
+                    left: `${dist.x}%`,
+                    top: `${dist.y}%`,
+                    transform: 'translate(-50%, -50%)',
+                    padding: dist.type === 'notification' ? '12px 20px' : '16px',
+                    background: dist.type === 'notification' 
+                      ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(139, 92, 246, 0.95))'
+                      : dist.type === 'popup'
+                      ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.95), rgba(251, 191, 36, 0.95))'
+                      : 'linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.95))',
+                    borderRadius: dist.type === 'notification' ? '12px' : '50%',
+                    color: 'white',
+                    fontWeight: '700',
+                    fontSize: dist.type === 'notification' ? '14px' : '24px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                    animation: 'bounce 0.5s ease-in-out',
+                    zIndex: 10,
+                    border: '2px solid white',
+                    userSelect: 'none'
+                  }}
+                >
+                  {dist.type === 'notification' ? '🔔 New!' : dist.type === 'popup' ? '⚠️' : '🔴'}
+                </div>
+              ))}
+
+              {/* Score display */}
               <div style={{
                 display: 'flex',
                 gap: '24px',
                 justifyContent: 'center',
-                marginTop: '24px'
+                marginTop: '40px',
+                flexWrap: 'wrap'
               }}>
                 <div style={{
                   fontSize: '16px',
                   color: 'var(--success)',
-                  fontWeight: '600'
+                  fontWeight: '700'
                 }}>
-                  ✓ {correctPatterns}
+                  ✓ Targets: {correctClicks}
                 </div>
                 <div style={{
                   fontSize: '16px',
                   color: 'var(--error)',
-                  fontWeight: '600'
+                  fontWeight: '700'
                 }}>
-                  ✗ {wrongPatterns}
+                  ❌ Distracted: {distractionClicks}
                 </div>
+                {responseTimes.length > 0 && (
+                  <div style={{
+                    fontSize: '16px',
+                    color: 'var(--primary)',
+                    fontWeight: '700'
+                  }}>
+                    ⚡ {Math.round(responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length)}ms
+                  </div>
+                )}
+              </div>
+
+              {/* Progress indicator */}
+              <div style={{
+                marginTop: '32px',
+                padding: '16px',
+                background: 'rgba(99, 102, 241, 0.08)',
+                borderRadius: '12px',
+                fontSize: '14px',
+                color: 'var(--text-secondary)',
+                lineHeight: '1.6'
+              }}>
+                <strong style={{color: 'var(--text-primary)'}}>Focus on the center.</strong> Distractions will try to pull your attention away. Resist them!
               </div>
             </div>
           </div>
@@ -681,8 +841,8 @@ export default function TestPage() {
                     <span style={{fontSize: '16px', fontWeight: '700', color: 'var(--success)'}}>{Math.round(reactionTimes.reduce((a,b) => a+b, 0) / reactionTimes.length)}ms</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{fontSize: '14px', color: 'var(--text-secondary)'}}>Pattern Memory</span>
-                    <span style={{fontSize: '16px', fontWeight: '700', color: correctPatterns >= 3 ? 'var(--success)' : 'var(--error)'}}>{correctPatterns}/5</span>
+                    <span style={{fontSize: '14px', color: 'var(--text-secondary)'}}>Distraction Resistance</span>
+                    <span style={{fontSize: '16px', fontWeight: '700', color: distractionClicks === 0 && correctClicks >= 4 ? 'var(--success)' : distractionClicks <= 2 && correctClicks >= 3 ? 'var(--primary)' : 'var(--error)'}}>{correctClicks}/6 ({distractionClicks} distracted)</span>
                   </div>
                 </div>
               </div>
