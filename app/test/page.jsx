@@ -346,78 +346,81 @@ export default function TestPage() {
       <>
         <ProgressBar />
         <FeedbackPopup />
-        <div className="container">
-          <div className="text-center mb-6 animate-fadeIn">
-            <Link href="/" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-              <Logo size={32} />
-              <span className="logo logo-small">unscroll</span>
+        <div className="container" style={{ padding: '12px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+          <div className="text-center mb-4 animate-fadeIn" style={{ marginTop: '8px' }}>
+            <Link href="/" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <Logo size={24} />
+              <span className="logo logo-small" style={{ fontSize: '18px' }}>unscroll</span>
             </Link>
           </div>
 
-          <div className="card animate-scaleIn">
-            <div className="text-center mb-6">
+          <div className="card animate-scaleIn" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '16px' }}>
+            <div className="text-center mb-4">
               <div style={{
                 display: 'inline-block',
-                padding: '8px 16px',
+                padding: '6px 12px',
                 background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(245, 158, 11, 0.15))',
                 border: '1px solid rgba(239, 68, 68, 0.3)',
-                borderRadius: '20px',
-                fontSize: '13px',
+                borderRadius: '16px',
+                fontSize: '11px',
                 fontWeight: '700',
                 color: 'var(--error)',
-                marginBottom: '20px',
+                marginBottom: '12px',
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px'
               }}>
                 ⚡ 30 Second Brain Test
               </div>
-              <h1 style={{ fontSize: '40px', marginBottom: '16px', lineHeight: '1.1' }}>
+              <h1 style={{ fontSize: '28px', marginBottom: '12px', lineHeight: '1.1' }}>
                 How Damaged Is<br/>Your Attention?
               </h1>
-              <p style={{ fontSize: '17px', lineHeight: '1.6', marginBottom: '24px' }}>
-                This scientifically-designed test will expose<br/>
-                exactly how bad your focus has gotten.
+              <p style={{ fontSize: '14px', lineHeight: '1.5', marginBottom: '16px' }}>
+                This scientifically-designed test will expose exactly how bad your focus has gotten.
               </p>
             </div>
 
             <div style={{
               background: 'rgba(99, 102, 241, 0.08)',
               border: '1px solid rgba(99, 102, 241, 0.2)',
-              borderRadius: '12px',
-              padding: '20px',
-              marginBottom: '24px',
-              textAlign: 'left'
+              borderRadius: '10px',
+              padding: '14px',
+              marginBottom: '16px',
+              textAlign: 'left',
+              flexShrink: 0
             }}>
-              <div style={{ fontSize: '15px', fontWeight: '600', marginBottom: '14px', color: 'var(--text-primary)' }}>
+              <div style={{ fontSize: '13px', fontWeight: '600', marginBottom: '10px', color: 'var(--text-primary)' }}>
                 We'll test your:
               </div>
-              <div style={{ fontSize: '15px', color: 'var(--text-secondary)', lineHeight: '2' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.7' }}>
                 🎯 <strong style={{color: 'var(--text-primary)'}}>Focus Endurance</strong> – Can you hold attention?<br/>
                 ⚡ <strong style={{color: 'var(--text-primary)'}}>Reaction Speed</strong> – How fast is your brain?<br/>
                 🚫 <strong style={{color: 'var(--text-primary)'}}>Distraction Resistance</strong> – Can you ignore distractions?
               </div>
             </div>
 
-            <button className="btn" onClick={startFocusTest} style={{
-              background: 'linear-gradient(135deg, var(--primary), var(--accent))',
-              fontSize: '18px',
-              padding: '18px',
-              marginBottom: '16px'
-            }}>
-              Start Brain Test
-              <span>→</span>
-            </button>
+            <div style={{ marginTop: 'auto', width: '100%' }}>
+              <button className="btn" onClick={startFocusTest} style={{
+                background: 'linear-gradient(135deg, var(--primary), var(--accent))',
+                fontSize: '16px',
+                padding: '14px',
+                marginBottom: '12px',
+                width: '100%'
+              }}>
+                Start Brain Test
+                <span>→</span>
+              </button>
 
-            <div style={{
-              textAlign: 'center',
-              padding: '14px',
-              background: 'rgba(239, 68, 68, 0.06)',
-              borderRadius: '10px',
-              border: '1px solid rgba(239, 68, 68, 0.15)'
-            }}>
-              <p style={{ fontSize: '13px', color: 'var(--error)', fontWeight: '600', margin: '0' }}>
-                ⚠️ Warning: Most people score below 40%
-              </p>
+              <div style={{
+                textAlign: 'center',
+                padding: '12px',
+                background: 'rgba(239, 68, 68, 0.06)',
+                borderRadius: '8px',
+                border: '1px solid rgba(239, 68, 68, 0.15)'
+              }}>
+                <p style={{ fontSize: '12px', color: 'var(--error)', fontWeight: '600', margin: '0', lineHeight: '1.4' }}>
+                  ⚠️ Warning: Most people score below 40%
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -433,20 +436,20 @@ export default function TestPage() {
       <>
         <ProgressBar />
         <FeedbackPopup />
-        <div className="container">
+        <div className="container" style={{ padding: '12px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
           <div className="flex flex-col items-center justify-center text-center" style={{ flex: 1 }}>
-            <div className="animate-fadeIn" style={{width: '100%', maxWidth: '400px'}}>
-              <h2 style={{ marginBottom: '12px', fontSize: '28px' }}>Focus Hold</h2>
-              <p style={{ marginBottom: '32px', fontSize: '16px', color: 'var(--text-secondary)' }}>
+            <div className="animate-fadeIn" style={{width: '100%', maxWidth: '100%'}}>
+              <h2 style={{ marginBottom: '8px', fontSize: '22px', marginTop: '8px' }}>Focus Hold</h2>
+              <p style={{ marginBottom: '16px', fontSize: '13px', color: 'var(--text-secondary)' }}>
                 Hold the circle for <strong style={{color: 'var(--primary)'}}>8 seconds</strong><br/>
                 Don't let go!
               </p>
 
               <div style={{
                 position: 'relative',
-                width: '280px',
-                height: '280px',
-                margin: '0 auto 32px'
+                width: '220px',
+                height: '220px',
+                margin: '0 auto 16px'
               }}>
                 {/* Progress ring */}
                 <svg style={{
@@ -458,27 +461,33 @@ export default function TestPage() {
                   transform: 'rotate(-90deg)'
                 }}>
                   <circle
-                    cx="140"
-                    cy="140"
-                    r="130"
+                    cx="110"
+                    cy="110"
+                    r="100"
                     fill="none"
                     stroke="var(--border)"
-                    strokeWidth="12"
+                    strokeWidth="10"
                   />
                   <circle
-                    cx="140"
-                    cy="140"
-                    r="130"
+                    cx="110"
+                    cy="110"
+                    r="100"
                     fill="none"
-                    stroke="url(#gradient)"
-                    strokeWidth="12"
-                    strokeDasharray={`${2 * Math.PI * 130}`}
-                    strokeDashoffset={`${2 * Math.PI * 130 * (1 - progressPercent / 100)}`}
+                    stroke="url(#gradient-focus)"
+                    strokeWidth="10"
+                    strokeDasharray={`${2 * Math.PI * 100}`}
+                    strokeDashoffset={`${2 * Math.PI * 100 * (1 - progressPercent / 100)}`}
                     strokeLinecap="round"
                     style={{transition: 'stroke-dashoffset 0.1s linear'}}
                   />
                   <defs>
                     <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="var(--primary)" />
+                      <stop offset="100%" stopColor="var(--accent)" />
+                    </linearGradient>
+                  </defs>
+                  <defs>
+                    <linearGradient id="gradient-focus" x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor="var(--primary)" />
                       <stop offset="100%" stopColor="var(--accent)" />
                     </linearGradient>
@@ -497,23 +506,23 @@ export default function TestPage() {
                     top: '50%',
                     left: '50%',
                     transform: `translate(-50%, -50%) scale(${isHolding ? 1.05 : 1})`,
-                    width: '220px',
-                    height: '220px',
+                    width: '170px',
+                    height: '170px',
                     borderRadius: '50%',
                     background: isHolding ?
                       'linear-gradient(135deg, var(--primary), var(--accent))' :
                       'linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(245, 158, 11, 0.2))',
-                    border: '4px solid',
+                    border: '3px solid',
                     borderColor: isHolding ? 'var(--primary)' : 'var(--border)',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '48px',
+                    fontSize: '36px',
                     fontWeight: '800',
                     color: isHolding ? 'white' : 'var(--text-secondary)',
                     transition: 'all 0.2s ease',
-                    boxShadow: isHolding ? '0 0 40px rgba(99, 102, 241, 0.6)' : 'none',
+                    boxShadow: isHolding ? '0 0 30px rgba(99, 102, 241, 0.6)' : 'none',
                     userSelect: 'none'
                   }}
                 >
@@ -522,17 +531,17 @@ export default function TestPage() {
               </div>
 
               <div style={{
-                fontSize: '20px',
+                fontSize: '18px',
                 fontWeight: '700',
                 color: 'var(--primary)',
-                marginBottom: '8px'
+                marginBottom: '6px'
               }}>
                 {(holdTime / 1000).toFixed(1)}s / 8.0s
               </div>
 
               {focusBreaks > 0 && (
                 <div style={{
-                  fontSize: '14px',
+                  fontSize: '12px',
                   color: 'var(--error)',
                   fontWeight: '600'
                 }}>
@@ -552,22 +561,22 @@ export default function TestPage() {
       <>
         <ProgressBar />
         <FeedbackPopup />
-        <div className="container" onClick={handleReactionClick} style={{ cursor: 'pointer' }}>
+        <div className="container" onClick={handleReactionClick} style={{ cursor: 'pointer', padding: '12px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
           <div className="flex flex-col items-center justify-center text-center" style={{ flex: 1 }}>
-            <div className="animate-fadeIn">
-              <h2 style={{ marginBottom: '12px', fontSize: '28px' }}>Reaction Speed</h2>
-              <p style={{ marginBottom: '24px', fontSize: '16px' }}>
+            <div className="animate-fadeIn" style={{ width: '100%' }}>
+              <h2 style={{ marginBottom: '8px', fontSize: '22px', marginTop: '8px' }}>Reaction Speed</h2>
+              <p style={{ marginBottom: '12px', fontSize: '13px' }}>
                 Click as soon as you see <span style={{color: 'var(--success)', fontWeight: '700'}}>GREEN</span>
               </p>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '32px' }}>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '20px' }}>
                 Round {currentReaction + 1} of 3
               </p>
 
               <div style={{
-                width: '180px',
-                height: '180px',
+                width: '150px',
+                height: '150px',
                 borderRadius: '50%',
-                margin: '40px auto',
+                margin: '20px auto',
                 background: reactionPhase === "show" ? 'var(--success)' :
                            reactionPhase === "success" ? 'var(--primary)' :
                            'var(--border)',
@@ -575,9 +584,9 @@ export default function TestPage() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '64px',
-                boxShadow: reactionPhase === "show" ? '0 0 60px rgba(16, 185, 129, 0.8)' :
-                          reactionPhase === "success" ? '0 0 40px rgba(99, 102, 241, 0.6)' :
+                fontSize: '48px',
+                boxShadow: reactionPhase === "show" ? '0 0 50px rgba(16, 185, 129, 0.8)' :
+                          reactionPhase === "success" ? '0 0 30px rgba(99, 102, 241, 0.6)' :
                           'none',
                 animation: reactionPhase === "show" ? 'pulse 0.5s ease-in-out infinite' : 'none'
               }}>
@@ -585,7 +594,7 @@ export default function TestPage() {
               </div>
 
               {reactionPhase === "waiting" && (
-                <p style={{ color: 'var(--text-secondary)', fontSize: '15px', fontWeight: '600' }}>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: '600' }}>
                   Wait for it...
                 </p>
               )}
@@ -602,58 +611,62 @@ export default function TestPage() {
       <>
         <ProgressBar />
         <FeedbackPopup />
-        <div className="container" style={{ position: 'relative', overflow: 'hidden' }}>
-          <div className="flex flex-col items-center justify-center text-center" style={{ flex: 1, minHeight: '100vh', padding: '20px' }}>
-            <div className="animate-fadeIn" style={{width: '100%', maxWidth: '500px', position: 'relative'}}>
-              <h2 style={{ marginBottom: '12px', fontSize: '28px' }}>Distraction Resistance</h2>
-              <p style={{ marginBottom: '8px', fontSize: '16px', color: 'var(--text-secondary)' }}>
-                Round {distractionRound + 1} of 6
-              </p>
-              
-              {/* Instructions */}
-              <div style={{
-                marginBottom: '32px',
-                padding: '16px 20px',
-                background: 'rgba(239, 68, 68, 0.1)',
-                border: '2px solid rgba(239, 68, 68, 0.3)',
-                borderRadius: '16px',
-                fontSize: '16px',
-                fontWeight: '600',
-                color: 'var(--text-primary)'
-              }}>
-                🎯 Click the <span style={{color: targetColor === 'blue' ? '#3B82F6' : '#10B981', fontWeight: '800'}}>{targetColor.toUpperCase()}</span> circle when it appears<br/>
-                🚫 <span style={{color: 'var(--error)'}}>IGNORE</span> all distractions!
+        <div className="container" style={{ position: 'relative', overflow: 'hidden', padding: '12px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+          <div className="flex flex-col items-center justify-center text-center" style={{ flex: 1, position: 'relative' }}>
+            <div className="animate-fadeIn" style={{width: '100%', maxWidth: '100%', position: 'relative', height: '100%', display: 'flex', flexDirection: 'column'}}>
+              <div style={{ flexShrink: 0 }}>
+                <h2 style={{ marginBottom: '6px', fontSize: '20px', marginTop: '8px' }}>Distraction Resistance</h2>
+                <p style={{ marginBottom: '8px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                  Round {distractionRound + 1} of 6
+                </p>
+                
+                {/* Instructions */}
+                <div style={{
+                  marginBottom: '16px',
+                  padding: '12px 14px',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '2px solid rgba(239, 68, 68, 0.3)',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: 'var(--text-primary)',
+                  lineHeight: '1.4'
+                }}>
+                  🎯 Click <span style={{color: targetColor === 'blue' ? '#3B82F6' : '#10B981', fontWeight: '800'}}>{targetColor.toUpperCase()}</span> when it appears<br/>
+                  🚫 <span style={{color: 'var(--error)'}}>IGNORE</span> all distractions!
+                </div>
               </div>
 
               {/* Central target */}
               <div style={{
                 position: 'relative',
-                width: '200px',
-                height: '200px',
-                margin: '40px auto',
+                width: '160px',
+                height: '160px',
+                margin: '16px auto',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                flexShrink: 0
               }}>
                 {targetVisible ? (
                   <div
                     onClick={handleTargetClick}
                     style={{
-                      width: '120px',
-                      height: '120px',
+                      width: '100px',
+                      height: '100px',
                       borderRadius: '50%',
                       background: targetColor === 'blue'
                         ? 'linear-gradient(135deg, #3B82F6, #2563EB)'
                         : 'linear-gradient(135deg, #10B981, #059669)',
-                      boxShadow: `0 0 50px ${targetColor === 'blue' ? 'rgba(59, 130, 246, 0.8)' : 'rgba(16, 185, 129, 0.8)'}`,
+                      boxShadow: `0 0 40px ${targetColor === 'blue' ? 'rgba(59, 130, 246, 0.8)' : 'rgba(16, 185, 129, 0.8)'}`,
                       cursor: 'pointer',
                       animation: 'pulse 0.8s ease-in-out infinite',
                       transition: 'all 0.2s ease',
-                      border: '4px solid white',
+                      border: '3px solid white',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '48px',
+                      fontSize: '36px',
                       fontWeight: '800',
                       color: 'white'
                     }}
@@ -668,15 +681,15 @@ export default function TestPage() {
                   </div>
                 ) : (
                   <div style={{
-                    width: '120px',
-                    height: '120px',
+                    width: '100px',
+                    height: '100px',
                     borderRadius: '50%',
                     background: 'var(--bg-dark)',
-                    border: '3px dashed var(--border)',
+                    border: '2px dashed var(--border)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '32px',
+                    fontSize: '28px',
                     color: 'var(--text-secondary)'
                   }}>
                     ⏳
@@ -694,16 +707,16 @@ export default function TestPage() {
                     left: `${dist.x}%`,
                     top: `${dist.y}%`,
                     transform: 'translate(-50%, -50%)',
-                    padding: dist.type === 'notification' ? '12px 20px' : '16px',
+                    padding: dist.type === 'notification' ? '10px 16px' : '12px',
                     background: dist.type === 'notification' 
                       ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(139, 92, 246, 0.95))'
                       : dist.type === 'popup'
                       ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.95), rgba(251, 191, 36, 0.95))'
                       : 'linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.95))',
-                    borderRadius: dist.type === 'notification' ? '12px' : '50%',
+                    borderRadius: dist.type === 'notification' ? '10px' : '50%',
                     color: 'white',
                     fontWeight: '700',
-                    fontSize: dist.type === 'notification' ? '14px' : '24px',
+                    fontSize: dist.type === 'notification' ? '12px' : '20px',
                     cursor: 'pointer',
                     boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
                     animation: 'bounce 0.5s ease-in-out',
@@ -719,47 +732,35 @@ export default function TestPage() {
               {/* Score display */}
               <div style={{
                 display: 'flex',
-                gap: '24px',
+                gap: '16px',
                 justifyContent: 'center',
-                marginTop: '40px',
+                marginTop: 'auto',
+                marginBottom: '12px',
                 flexWrap: 'wrap'
               }}>
                 <div style={{
-                  fontSize: '16px',
+                  fontSize: '13px',
                   color: 'var(--success)',
                   fontWeight: '700'
                 }}>
-                  ✓ Targets: {correctClicks}
+                  ✓ {correctClicks}
                 </div>
                 <div style={{
-                  fontSize: '16px',
+                  fontSize: '13px',
                   color: 'var(--error)',
                   fontWeight: '700'
                 }}>
-                  ❌ Distracted: {distractionClicks}
+                  ❌ {distractionClicks}
                 </div>
                 {responseTimes.length > 0 && (
                   <div style={{
-                    fontSize: '16px',
+                    fontSize: '13px',
                     color: 'var(--primary)',
                     fontWeight: '700'
                   }}>
                     ⚡ {Math.round(responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length)}ms
                   </div>
                 )}
-              </div>
-
-              {/* Progress indicator */}
-              <div style={{
-                marginTop: '32px',
-                padding: '16px',
-                background: 'rgba(99, 102, 241, 0.08)',
-                borderRadius: '12px',
-                fontSize: '14px',
-                color: 'var(--text-secondary)',
-                lineHeight: '1.6'
-              }}>
-                <strong style={{color: 'var(--text-primary)'}}>Focus on the center.</strong> Distractions will try to pull your attention away. Resist them!
               </div>
             </div>
           </div>
@@ -782,87 +783,91 @@ export default function TestPage() {
     return (
       <>
         <ProgressBar />
-        <div className="container">
+        <div className="container" style={{ padding: '12px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
           <div className="flex flex-col items-center justify-center" style={{ flex: 1 }}>
-            <div className="card text-center animate-scaleIn" style={{maxWidth: '500px'}}>
-              <div style={{ fontSize: '80px', marginBottom: '16px' }}>{scoreMsg.emoji}</div>
+            <div className="card text-center animate-scaleIn" style={{maxWidth: '100%', width: '100%', padding: '16px', display: 'flex', flexDirection: 'column', height: '100%'}}>
+              <div style={{ flexShrink: 0 }}>
+                <div style={{ fontSize: '56px', marginBottom: '12px' }}>{scoreMsg.emoji}</div>
 
-              <h2 style={{ color: 'var(--text-secondary)', fontWeight: 500, marginBottom: '12px', fontSize: '16px', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                Your Brain Score
-              </h2>
+                <h2 style={{ color: 'var(--text-secondary)', fontWeight: 500, marginBottom: '8px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  Your Brain Score
+                </h2>
 
-              <div style={{
-                fontSize: '96px',
-                fontWeight: '900',
-                background: score >= 65 ?
-                  'linear-gradient(135deg, var(--success), var(--primary))' :
-                  score >= 45 ?
-                  'linear-gradient(135deg, var(--primary), var(--accent))' :
-                  'linear-gradient(135deg, var(--error), var(--accent))',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                marginBottom: '16px',
-                lineHeight: '1'
-              }}>
-                {score}
-              </div>
-
-              <div style={{
-                fontSize: '24px',
-                fontWeight: '700',
-                color: 'var(--text-primary)',
-                marginBottom: '8px'
-              }}>
-                {scoreMsg.text}
-              </div>
-              <p style={{ fontSize: '17px', lineHeight: '1.5', marginBottom: '32px', fontWeight: '500' }}>
-                {scoreMsg.subtext}
-              </p>
-
-              {/* Detailed breakdown */}
-              <div style={{
-                background: 'var(--bg-dark)',
-                borderRadius: '12px',
-                padding: '20px',
-                marginBottom: '24px',
-                textAlign: 'left'
-              }}>
-                <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px', color: 'var(--text-primary)' }}>
-                  Your Results:
+                <div style={{
+                  fontSize: '72px',
+                  fontWeight: '900',
+                  background: score >= 65 ?
+                    'linear-gradient(135deg, var(--success), var(--primary))' :
+                    score >= 45 ?
+                    'linear-gradient(135deg, var(--primary), var(--accent))' :
+                    'linear-gradient(135deg, var(--error), var(--accent))',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  marginBottom: '12px',
+                  lineHeight: '1'
+                }}>
+                  {score}
                 </div>
-                <div style={{ display: 'grid', gap: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{fontSize: '14px', color: 'var(--text-secondary)'}}>Focus Endurance</span>
-                    <span style={{fontSize: '16px', fontWeight: '700', color: 'var(--primary)'}}>{((holdTime / 8000) * 100).toFixed(0)}%</span>
+
+                <div style={{
+                  fontSize: '18px',
+                  fontWeight: '700',
+                  color: 'var(--text-primary)',
+                  marginBottom: '6px'
+                }}>
+                  {scoreMsg.text}
+                </div>
+                <p style={{ fontSize: '14px', lineHeight: '1.4', marginBottom: '20px', fontWeight: '500' }}>
+                  {scoreMsg.subtext}
+                </p>
+
+                {/* Detailed breakdown */}
+                <div style={{
+                  background: 'var(--bg-dark)',
+                  borderRadius: '10px',
+                  padding: '14px',
+                  marginBottom: '20px',
+                  textAlign: 'left'
+                }}>
+                  <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '12px', color: 'var(--text-primary)' }}>
+                    Your Results:
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{fontSize: '14px', color: 'var(--text-secondary)'}}>Reaction Speed</span>
-                    <span style={{fontSize: '16px', fontWeight: '700', color: 'var(--success)'}}>{Math.round(reactionTimes.reduce((a,b) => a+b, 0) / reactionTimes.length)}ms</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{fontSize: '14px', color: 'var(--text-secondary)'}}>Distraction Resistance</span>
-                    <span style={{fontSize: '16px', fontWeight: '700', color: distractionClicks === 0 && correctClicks >= 4 ? 'var(--success)' : distractionClicks <= 2 && correctClicks >= 3 ? 'var(--primary)' : 'var(--error)'}}>{correctClicks}/6 ({distractionClicks} distracted)</span>
+                  <div style={{ display: 'grid', gap: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{fontSize: '12px', color: 'var(--text-secondary)'}}>Focus Endurance</span>
+                      <span style={{fontSize: '14px', fontWeight: '700', color: 'var(--primary)'}}>{((holdTime / 8000) * 100).toFixed(0)}%</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{fontSize: '12px', color: 'var(--text-secondary)'}}>Reaction Speed</span>
+                      <span style={{fontSize: '14px', fontWeight: '700', color: 'var(--success)'}}>{Math.round(reactionTimes.reduce((a,b) => a+b, 0) / reactionTimes.length)}ms</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{fontSize: '12px', color: 'var(--text-secondary)'}}>Distraction Resistance</span>
+                      <span style={{fontSize: '14px', fontWeight: '700', color: distractionClicks === 0 && correctClicks >= 4 ? 'var(--success)' : distractionClicks <= 2 && correctClicks >= 3 ? 'var(--primary)' : 'var(--error)'}}>{correctClicks}/6 ({distractionClicks})</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-6" style={{ width: '100%' }}>
+              <div style={{ marginTop: 'auto', width: '100%' }}>
                 <Link href={`/result?score=${score}&src=${params.src}&campaign=${params.campaign}&ref=${params.ref}`}>
                   <button className="btn" style={{
                     background: 'linear-gradient(135deg, var(--primary), var(--accent))',
-                    fontSize: '18px',
-                    padding: '18px',
-                    marginBottom: '12px'
+                    fontSize: '16px',
+                    padding: '14px',
+                    marginBottom: '10px',
+                    width: '100%'
                   }}>
                     Fix My Broken Focus
                     <span>→</span>
                   </button>
                 </Link>
                 <p style={{
-                  fontSize: '13px',
+                  fontSize: '12px',
                   color: 'var(--text-secondary)',
-                  textAlign: 'center'
+                  textAlign: 'center',
+                  lineHeight: '1.4'
                 }}>
                   Get your personalized recovery plan • Free
                 </p>

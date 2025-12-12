@@ -38,6 +38,55 @@ export default function ResultPage() {
     setDone(true);
   }
 
+  async function shareScore() {
+    const score = params.score;
+    const shareText = `I just scored ${score}/100 on the Unscroll Focus Test! 🧠\n\nTest your attention span: ${window.location.origin}/test${params.src ? `?src=${params.src}` : ''}`;
+    const shareUrl = `${window.location.origin}/test${params.src ? `?src=${params.src}` : ''}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `My Focus Score: ${score}/100`,
+          text: shareText,
+          url: shareUrl,
+        });
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          // Fallback to clipboard if share fails
+          copyToClipboard();
+        }
+      }
+    } else {
+      // Fallback to clipboard
+      copyToClipboard();
+    }
+  }
+
+  async function copyToClipboard() {
+    const score = params.score;
+    const shareText = `I just scored ${score}/100 on the Unscroll Focus Test! 🧠\n\nTest your attention span: ${window.location.origin}/test${params.src ? `?src=${params.src}` : ''}`;
+    
+    try {
+      await navigator.clipboard.writeText(shareText);
+      alert('Score copied to clipboard! 📋');
+    } catch (err) {
+      // Fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = shareText;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        alert('Score copied to clipboard! 📋');
+      } catch (e) {
+        alert('Could not copy. Please share manually.');
+      }
+      document.body.removeChild(textarea);
+    }
+  }
+
   if (done) {
     const personalizedMessage = Number(params.score) >= 70 ?
       "We'll send you advanced techniques to push your focus to elite levels." :
@@ -46,43 +95,52 @@ export default function ResultPage() {
       "We'll send you emergency protocols to rescue your severely damaged focus.";
 
     return (
-      <div className="container">
+      <div className="container" style={{ padding: '12px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <div className="flex flex-col items-center justify-center" style={{ flex: 1 }}>
-          <div className="card text-center animate-scaleIn">
-            <div className="success-icon animate-bounce" style={{ fontSize: '64px' }}>🚀</div>
-            <h1 style={{ fontSize: '32px', marginBottom: '12px' }}>You're on the list!</h1>
-            <p style={{ fontSize: '17px', lineHeight: '1.6', color: 'var(--text-primary)', fontWeight: '500' }}>
-              {personalizedMessage}
-            </p>
+          <div className="card text-center animate-scaleIn" style={{ padding: '16px', width: '100%', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+            <div>
+              <div className="success-icon animate-bounce" style={{ fontSize: '48px', marginBottom: '12px' }}>🚀</div>
+              <h1 style={{ fontSize: '24px', marginBottom: '10px' }}>You're on the list!</h1>
+              <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--text-primary)', fontWeight: '500', marginBottom: '16px' }}>
+                {personalizedMessage}
+              </p>
 
-            <div style={{
-              background: 'rgba(16, 185, 129, 0.1)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              borderRadius: '12px',
-              padding: '20px',
-              marginTop: '24px',
-              marginBottom: '24px'
-            }}>
-              <div style={{ fontSize: '14px', color: 'var(--success)', fontWeight: '600', marginBottom: '8px' }}>
-                ✓ What happens next:
-              </div>
-              <div style={{ fontSize: '14px', color: 'var(--text-secondary)', textAlign: 'left', lineHeight: '1.8' }}>
-                • Early access invite (launching in 2 weeks)<br/>
-                • Your personalized training roadmap<br/>
-                • Exclusive founding member pricing<br/>
-                • Direct access to our neuroscience team
+              <div style={{
+                background: 'rgba(16, 185, 129, 0.1)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                borderRadius: '10px',
+                padding: '14px',
+                marginBottom: '16px'
+              }}>
+                <div style={{ fontSize: '12px', color: 'var(--success)', fontWeight: '600', marginBottom: '8px' }}>
+                  ✓ What happens next:
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'left', lineHeight: '1.6' }}>
+                  • Early access invite (launching in 2 weeks)<br/>
+                  • Your personalized training roadmap<br/>
+                  • Exclusive founding member pricing<br/>
+                  • Direct access to our neuroscience team
+                </div>
               </div>
             </div>
 
-            <div className="mt-6">
-              <Link href="/">
-                <button className="btn" style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}>
-                  Share Your Score
-                  <span>→</span>
-                </button>
-              </Link>
-              <Link href="/" style={{ display: 'block', marginTop: '12px' }}>
-                <button className="btn btn-secondary">
+            <div style={{ width: '100%', marginTop: 'auto' }}>
+              <button 
+                className="btn" 
+                onClick={shareScore}
+                style={{ 
+                  background: 'linear-gradient(135deg, var(--primary), var(--accent))',
+                  width: '100%',
+                  marginBottom: '10px',
+                  fontSize: '15px',
+                  padding: '14px'
+                }}
+              >
+                📤 Share Your Score
+                <span>→</span>
+              </button>
+              <Link href="/" style={{ display: 'block' }}>
+                <button className="btn btn-secondary" style={{ width: '100%', fontSize: '14px', padding: '12px' }}>
                   Back to Home
                 </button>
               </Link>
@@ -115,40 +173,41 @@ export default function ResultPage() {
     };
 
   return (
-    <div className="container">
-      <div className="text-center mb-6 animate-fadeIn">
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-          <Logo size={32} />
-          <span className="logo logo-small">unscroll</span>
+    <div className="container" style={{ padding: '12px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div className="text-center mb-4 animate-fadeIn" style={{ marginTop: '8px' }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <Logo size={24} />
+          <span className="logo logo-small" style={{ fontSize: '18px' }}>unscroll</span>
         </Link>
       </div>
 
-      <div className="card animate-scaleIn">
-        <div className="text-center mb-6">
-          <h2 style={{ color: 'var(--text-secondary)', fontWeight: 500, marginBottom: '8px', fontSize: '15px' }}>
+      <div className="card animate-scaleIn" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '16px' }}>
+        <div className="text-center mb-4">
+          <h2 style={{ color: 'var(--text-secondary)', fontWeight: 500, marginBottom: '6px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>
             Your Focus Score
           </h2>
-          <div className="score-display" style={{ marginTop: '16px', marginBottom: '16px' }}>{params.score}</div>
+          <div className="score-display" style={{ marginTop: '8px', marginBottom: '12px', fontSize: '72px' }}>{params.score}</div>
 
           <div style={{
-            fontSize: '22px',
+            fontSize: '18px',
             fontWeight: '700',
             color: 'var(--text-primary)',
-            marginBottom: '8px'
+            marginBottom: '6px'
           }}>
             {scoreAnalysis.emoji} {scoreAnalysis.title}
           </div>
-          <p style={{ fontSize: '16px', lineHeight: '1.6', marginBottom: '12px' }}>
+          <p style={{ fontSize: '14px', lineHeight: '1.5', marginBottom: '10px', color: 'var(--text-secondary)' }}>
             {scoreAnalysis.message}
           </p>
           <div style={{
-            fontSize: '14px',
+            fontSize: '12px',
             color: 'var(--accent)',
             fontWeight: '600',
-            padding: '12px',
+            padding: '10px',
             background: 'rgba(245, 158, 11, 0.1)',
             borderRadius: '8px',
-            border: '1px solid rgba(245, 158, 11, 0.3)'
+            border: '1px solid rgba(245, 158, 11, 0.3)',
+            lineHeight: '1.4'
           }}>
             ⚡ {scoreAnalysis.urgency}
           </div>
@@ -157,14 +216,15 @@ export default function ResultPage() {
         <div style={{
           background: 'rgba(99, 102, 241, 0.05)',
           border: '1px solid rgba(99, 102, 241, 0.2)',
-          borderRadius: '12px',
-          padding: '20px',
-          marginBottom: '24px'
+          borderRadius: '10px',
+          padding: '14px',
+          marginBottom: '16px',
+          flexShrink: 0
         }}>
-          <div style={{ fontSize: '15px', fontWeight: '600', marginBottom: '12px', color: 'var(--text-primary)' }}>
+          <div style={{ fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: 'var(--text-primary)' }}>
             Get your free personalized training plan:
           </div>
-          <div style={{ fontSize: '14px', color: 'var(--text-secondary)', textAlign: 'left', lineHeight: '1.8' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'left', lineHeight: '1.6' }}>
             ✓ Custom exercises based on your score<br/>
             ✓ Daily 5-minute training sessions<br/>
             ✓ Track your improvement in real-time<br/>
@@ -172,55 +232,73 @@ export default function ResultPage() {
           </div>
         </div>
 
-        <div className="form-group">
-          <label htmlFor="email" style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)' }}>
-            Enter your email to unlock your plan
-          </label>
-          <input
-            id="email"
-            type="email"
-            className="input"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="your@email.com"
-            onKeyDown={(e) => e.key === 'Enter' && save()}
-            style={{ fontSize: '16px' }}
-          />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+          <div className="form-group" style={{ marginBottom: '12px' }}>
+            <label htmlFor="email" style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '6px', display: 'block' }}>
+              Enter your email to unlock your plan
+            </label>
+            <input
+              id="email"
+              type="email"
+              className="input"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
+              onKeyDown={(e) => e.key === 'Enter' && save()}
+              style={{ fontSize: '15px', padding: '12px' }}
+            />
+          </div>
+
+          <button
+            className="btn"
+            onClick={save}
+            disabled={loading || !email}
+            style={{
+              opacity: loading || !email ? 0.7 : 1,
+              background: 'linear-gradient(135deg, var(--primary), var(--accent))',
+              fontSize: '15px',
+              padding: '14px',
+              marginBottom: '10px',
+              width: '100%'
+            }}
+          >
+            {loading ? (
+              <>
+                <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>⟳</span>
+                Unlocking...
+              </>
+            ) : (
+              <>
+                Get My Free Training Plan
+                <span>→</span>
+              </>
+            )}
+          </button>
+
+          <button
+            className="btn btn-secondary"
+            onClick={shareScore}
+            style={{
+              fontSize: '14px',
+              padding: '12px',
+              width: '100%',
+              marginBottom: '10px'
+            }}
+          >
+            📤 Share My Score
+          </button>
+
+          <p style={{
+            textAlign: 'center',
+            fontSize: '11px',
+            color: 'var(--text-secondary)',
+            marginTop: '8px',
+            marginBottom: '0',
+            lineHeight: '1.4'
+          }}>
+            🔒 We respect your privacy. Unsubscribe anytime. No spam.
+          </p>
         </div>
-
-        <button
-          className="btn"
-          onClick={save}
-          disabled={loading || !email}
-          style={{
-            opacity: loading || !email ? 0.7 : 1,
-            background: 'linear-gradient(135deg, var(--primary), var(--accent))',
-            fontSize: '17px',
-            padding: '16px'
-          }}
-        >
-          {loading ? (
-            <>
-              <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>⟳</span>
-              Unlocking your plan...
-            </>
-          ) : (
-            <>
-              Get My Free Training Plan
-              <span>→</span>
-            </>
-          )}
-        </button>
-
-        <p style={{
-          textAlign: 'center',
-          fontSize: '13px',
-          color: 'var(--text-secondary)',
-          marginTop: '16px',
-          marginBottom: '0'
-        }}>
-          🔒 We respect your privacy. Unsubscribe anytime. No spam.
-        </p>
       </div>
     </div>
   );

@@ -72,3 +72,4 @@ The API route uses Edge runtime for Cloudflare Pages compatibility. The code use
 
 If you encounter issues, you can switch to Node.js runtime by removing `export const runtime = 'edge';` from `website/app/api/waitlist/join/route.js`.
 
+

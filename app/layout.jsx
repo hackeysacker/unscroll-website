@@ -3,6 +3,12 @@ import './globals.css'
 export const metadata = {
   title: 'Unscroll - Rebuild Your Attention',
   description: 'Break free from doom scrolling and rebuild your focus',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
 }
 
 export default function RootLayout({ children }) {
