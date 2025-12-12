@@ -14,11 +14,24 @@ The marketing website in the `website/` folder is configured for Cloudflare Page
 The repository has a monorepo structure with the website in a subdirectory. Cloudflare Pages is configured to build from the root, and the root `package.json` includes a `pages:build` script that delegates to the website folder.
 
 **Cloudflare Pages Settings (configure in dashboard):**
+
+#### Build Configuration
 - **Framework preset**: None (custom configuration)
 - **Build command**: `npm install --legacy-peer-deps && npm run pages:build`
 - **Build output directory**: `.vercel/output/static`
 - **Root directory**: `/` (leave empty - builds from repository root)
 - **Node version**: 22.16.0 (automatically detected from website/.node-version)
+
+#### Compatibility Flags (REQUIRED!)
+You **MUST** enable the `nodejs_compat` compatibility flag for the site to work:
+
+1. Go to your Cloudflare Pages project
+2. Navigate to **Settings** → **Functions**
+3. Scroll to **Compatibility Flags**
+4. Add `nodejs_compat` to **both Production and Preview** environments
+5. Save changes
+
+Without this flag, you'll see a "Node.JS Compatibility Error" when visiting the site.
 
 The root-level `pages:build` script automatically:
 1. Changes to the `website/` directory
