@@ -16,7 +16,7 @@ The repository has a monorepo structure with the website in a subdirectory. Clou
 **Cloudflare Pages Settings (configure in dashboard):**
 - **Framework preset**: None (custom configuration)
 - **Build command**: `npm install --legacy-peer-deps && npm run pages:build`
-- **Build output directory**: `website/.vercel/output/static`
+- **Build output directory**: `.vercel/output/static`
 - **Root directory**: `/` (leave empty - builds from repository root)
 - **Node version**: 22.16.0 (automatically detected from website/.node-version)
 
@@ -24,6 +24,7 @@ The root-level `pages:build` script automatically:
 1. Changes to the `website/` directory
 2. Installs website dependencies
 3. Runs the Next.js build for Cloudflare Pages
+4. Copies the build output to the root `.vercel/` directory for Cloudflare to find
 
 ### Manual Deployment
 
