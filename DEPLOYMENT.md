@@ -11,14 +11,19 @@ The marketing website in the `website/` folder is configured for Cloudflare Page
 
 ### Automatic Deployment
 
-The repository is configured with `wrangler.toml` at the root level to automatically build from the `website/` subdirectory.
+The repository has a monorepo structure with the website in a subdirectory. Cloudflare Pages is configured to build from the root, and the root `package.json` includes a `pages:build` script that delegates to the website folder.
 
-**Cloudflare Pages Settings:**
-- **Framework preset**: Next.js
-- **Build command**: `cd website && npm install && npm run pages:build`
+**Cloudflare Pages Settings (configure in dashboard):**
+- **Framework preset**: None (custom configuration)
+- **Build command**: `npm install --legacy-peer-deps && npm run pages:build`
 - **Build output directory**: `website/.vercel/output/static`
-- **Root directory**: Leave empty (wrangler.toml handles this)
-- **Node version**: 22.16.0 (from website/.node-version)
+- **Root directory**: `/` (leave empty - builds from repository root)
+- **Node version**: 22.16.0 (automatically detected from website/.node-version)
+
+The root-level `pages:build` script automatically:
+1. Changes to the `website/` directory
+2. Installs website dependencies
+3. Runs the Next.js build for Cloudflare Pages
 
 ### Manual Deployment
 
