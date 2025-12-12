@@ -1,0 +1,7 @@
+[build]
+command = "cd website && npm install && npm run pages:build"
+cwd = "website"
+
+[build.upload]
+format = "service-worker"
+dir = "website/.vercel/output/static"

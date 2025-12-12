@@ -1,37 +1,62 @@
 # Deployment Guide
 
-This app is configured to run as a web application. Follow these steps to build and deploy it.
+This repository contains multiple projects:
+- `website/` - Marketing website (Next.js 15)
+- `mobile/` - React Native mobile app
+- `nonmobile/` - Web application
 
-## Development
+## Website Deployment (Cloudflare Pages)
 
-To run the app in development mode:
+The marketing website in the `website/` folder is configured for Cloudflare Pages deployment.
+
+### Automatic Deployment
+
+The repository is configured with `wrangler.toml` at the root level to automatically build from the `website/` subdirectory.
+
+**Cloudflare Pages Settings:**
+- **Framework preset**: Next.js
+- **Build command**: `cd website && npm install && npm run pages:build`
+- **Build output directory**: `website/.vercel/output/static`
+- **Root directory**: Leave empty (wrangler.toml handles this)
+- **Node version**: 22.16.0 (from website/.node-version)
+
+### Manual Deployment
+
+To deploy manually:
 
 ```bash
+cd website
+npm install
+npm run pages:build
+npm run deploy
+```
+
+### Local Development
+
+To run the website locally:
+
+```bash
+cd website
 npm install
 npm run dev
 ```
 
-The app will be available at `http://localhost:3000`
+The website will be available at `http://localhost:3000`
 
-## Production Build
+### Local Preview (Cloudflare Pages)
 
-To create a production build:
-
-```bash
-npm run build
-```
-
-This will create an optimized build in the `dist/` directory.
-
-## Preview Production Build
-
-To preview the production build locally:
+To preview the production build with Cloudflare Workers:
 
 ```bash
-npm run serve
+cd website
+npm run preview
 ```
 
-## Deployment Options
+## Mobile App Deployment
+
+See `mobile/` folder for React Native deployment instructions.
+
+## Deployment Options (Legacy - Non-Mobile App)
 
 ### Static Hosting
 
