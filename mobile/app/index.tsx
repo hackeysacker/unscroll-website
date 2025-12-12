@@ -24,8 +24,11 @@ import { ActivityDetailScreen } from '@/components/ActivityDetailScreen';
 import { PracticeScreen } from '@/components/PracticeScreen';
 import { LeaderboardScreen } from '@/components/LeaderboardScreen';
 import { ProfileScreen } from '@/components/ProfileScreen';
+import { AchievementsScreen } from '@/components/AchievementsScreen';
+import { PracticeOverview } from '@/components/PracticeOverview';
+import { FocusShieldScreen } from '@/components/FocusShieldScreen';
 
-type ViewMode = 'progress-tree' | 'settings' | 'level' | 'challenge' | 'insights-screen' | 'insights' | 'premium' | 'winddown' | 'skill-tree' | 'training-plan' | 'dev-testing' | 'avatar' | 'focus-journey' | 'activity-detail' | 'practice' | 'leaderboard' | 'profile-screen';
+type ViewMode = 'progress-tree' | 'settings' | 'level' | 'challenge' | 'insights-screen' | 'insights' | 'premium' | 'winddown' | 'skill-tree' | 'training-plan' | 'dev-testing' | 'avatar' | 'focus-journey' | 'activity-detail' | 'practice' | 'practice-overview' | 'practice-session' | 'leaderboard' | 'profile-screen' | 'achievements' | 'focus-shield';
 
 function AppContent() {
   const { user, isOnboarded, completeOnboarding, updateOnboardingData } = useAuth();
@@ -49,6 +52,22 @@ function AppContent() {
     duration: number;
     isPerfect: boolean;
     xpEarned: number;
+  } | null>(null);
+  const [selectedPractice, setSelectedPractice] = useState<{
+    id: string;
+    title: string;
+    description: string;
+    activities: string[];
+    totalXP: number;
+    duration: string;
+    difficulty: 'easy' | 'medium' | 'hard' | 'extreme';
+    colors: [string, string];
+  } | null>(null);
+  const [practiceSession, setPracticeSession] = useState<{
+    activities: string[];
+    currentIndex: number;
+    scores: number[];
+    totalXP: number;
   } | null>(null);
 
   // Show splash screen first
@@ -133,29 +152,106 @@ function AppContent() {
     return (
       <PracticeScreen
         onBack={() => setViewMode('progress-tree')}
-        onSelectPractice={(type) => {
-          // Map practice types to actual activity types with appropriate settings
-          const practiceConfigs: { [key: string]: { activity: string; duration: number; xp: number } } = {
-            'quick-practice': { activity: 'gaze_hold', duration: 30, xp: 15 },
-            'focus-training': { activity: 'stillness_test', duration: 60, xp: 20 },
-            'breathing': { activity: 'breath_pacing', duration: 45, xp: 10 },
-            'weak-skills': { activity: 'reaction_inhibition', duration: 60, xp: 20 },
-            'timed-challenge': { activity: 'multi_task_tap', duration: 180, xp: 25 },
-            'perfect-run': { activity: 'impulse_spike_test', duration: 60, xp: 30 },
-            'memory-boost': { activity: 'memory_flash', duration: 45, xp: 20 },
-            'endurance': { activity: 'stillness_test', duration: 120, xp: 50 },
-          };
+        onSelectPractice={(practiceId) => {
+          // Find the practice option to get its details
+          const { PRACTICE_OPTIONS } = require('@/components/PracticeScreen');
+          const practice = PRACTICE_OPTIONS.find((p: any) => p.id === practiceId);
+          
+          if (practice) {
+            setSelectedPractice({
+              id: practice.id,
+              title: practice.title,
+              description: practice.description,
+              activities: practice.activities,
+              totalXP: practice.xp,
+              duration: practice.duration,
+              difficulty: practice.difficulty,
+              colors: practice.color,
+            });
+            setViewMode('practice-overview');
+          }
+        }}
+      />
+    );
+  }
 
-          const config = practiceConfigs[type] || { activity: 'gaze_hold', duration: 60, xp: 15 };
-          setSelectedChallenge({
-            type: config.activity,
-            isTest: false,
-            sequence: undefined,
-            duration: config.duration,
-            xpReward: config.xp,
-            difficultyLevel: progress?.level || 1,
+  // Practice overview view
+  if (viewMode === 'practice-overview' && selectedPractice) {
+    return (
+      <PracticeOverview
+        practiceTitle={selectedPractice.title}
+        practiceDescription={selectedPractice.description}
+        activities={selectedPractice.activities as any}
+        totalXP={selectedPractice.totalXP}
+        estimatedDuration={selectedPractice.duration}
+        difficulty={selectedPractice.difficulty}
+        practiceColors={selectedPractice.colors}
+        onStart={() => {
+          // Initialize practice session
+          setPracticeSession({
+            activities: selectedPractice.activities,
+            currentIndex: 0,
+            scores: [],
+            totalXP: 0,
           });
-          setViewMode('challenge'); // Skip ActivityDetailScreen, go straight to challenge
+          setViewMode('practice-session');
+        }}
+        onBack={() => {
+          setSelectedPractice(null);
+          setViewMode('practice');
+        }}
+      />
+    );
+  }
+
+  // Practice session view - runs through all activities
+  if (viewMode === 'practice-session' && practiceSession) {
+    const currentActivity = practiceSession.activities[practiceSession.currentIndex];
+    const isLastActivity = practiceSession.currentIndex === practiceSession.activities.length - 1;
+
+    if (!currentActivity) {
+      // Practice complete - go back to practice screen
+      setPracticeSession(null);
+      setSelectedPractice(null);
+      setViewMode('practice');
+      return null;
+    }
+
+    return (
+      <ActivityPlayer
+        onBack={() => {
+          setPracticeSession(null);
+          setSelectedPractice(null);
+          setViewMode('practice');
+        }}
+        activityType={currentActivity as any}
+        isTest={false}
+        fixedLevel={3}
+        onActivityComplete={(score: number, duration: number) => {
+          // Calculate XP for this activity (base 10 + bonus for score)
+          const isPerfect = score >= 95;
+          const baseXP = 10;
+          const perfectBonus = isPerfect ? 10 : 0;
+          const scoreBonus = Math.round((score / 100) * 5);
+          const xpEarned = baseXP + perfectBonus + scoreBonus;
+
+          const newScores = [...practiceSession.scores, score];
+          const newTotalXP = practiceSession.totalXP + xpEarned;
+
+          // Show insights for each challenge
+          const challengeResult = {
+            challengeType: currentActivity,
+            level: 5, // Fixed level for practices
+            score,
+            duration,
+            isPerfect,
+            xpEarned,
+          };
+          setChallengeResult(challengeResult);
+          setViewMode('insights-screen');
+          
+          // Update practice session state after showing insights
+          // We'll handle the continuation in the insights screen
         }}
       />
     );
@@ -178,8 +274,28 @@ function AppContent() {
             setViewMode('insights');
           } else if (route === 'premium') {
             setViewMode('premium');
+          } else if (route === 'achievements') {
+            setViewMode('achievements');
           }
         }}
+      />
+    );
+  }
+
+  // Achievements screen view
+  if (viewMode === 'achievements') {
+    return (
+      <AchievementsScreen
+        onBack={() => setViewMode('profile-screen')}
+      />
+    );
+  }
+
+  // Focus Shield screen view
+  if (viewMode === 'focus-shield') {
+    return (
+      <FocusShieldScreen
+        onBack={() => setViewMode('progress-tree')}
       />
     );
   }
@@ -196,10 +312,14 @@ function AppContent() {
         onNavigate={(route) => {
           if (route === 'practice') {
             setViewMode('practice');
+          } else if (route === 'focus-shield') {
+            setViewMode('focus-shield');
           } else if (route === 'leaderboard') {
             setViewMode('leaderboard');
           } else if (route === 'profile-screen') {
             setViewMode('profile-screen');
+          } else if (route === 'premium') {
+            setViewMode('premium');
           }
         }}
       />
@@ -297,16 +417,56 @@ function AppContent() {
         isPerfect={challengeResult.isPerfect}
         xpEarned={challengeResult.xpEarned}
         onContinue={() => {
-          setChallengeResult(null);
-          setViewMode('progress-tree');
+          // Check if we're in a practice session
+          if (practiceSession) {
+            const newScores = [...practiceSession.scores, challengeResult.score];
+            const newTotalXP = practiceSession.totalXP + challengeResult.xpEarned;
+            const isLastActivity = practiceSession.currentIndex === practiceSession.activities.length - 1;
+
+            setChallengeResult(null);
+
+            if (isLastActivity) {
+              // Practice complete - go back to practice screen
+              setPracticeSession(null);
+              setSelectedPractice(null);
+              setViewMode('practice');
+            } else {
+              // Move to next activity in practice
+              setPracticeSession({
+                ...practiceSession,
+                currentIndex: practiceSession.currentIndex + 1,
+                scores: newScores,
+                totalXP: newTotalXP,
+              });
+              setViewMode('practice-session');
+            }
+          } else {
+            // Regular challenge completion
+            setChallengeResult(null);
+            setSelectedChallenge(null);
+            setViewMode('progress-tree');
+          }
         }}
         onRetry={() => {
+          // Keep the challenge selected and go back to retry
           setChallengeResult(null);
-          setViewMode('challenge');
+          if (practiceSession) {
+            setViewMode('practice-session');
+          } else {
+            setViewMode('challenge');
+          }
         }}
         onBack={() => {
           setChallengeResult(null);
-          setViewMode('progress-tree');
+          if (practiceSession) {
+            // Cancel practice session
+            setPracticeSession(null);
+            setSelectedPractice(null);
+            setViewMode('practice');
+          } else {
+            setSelectedChallenge(null);
+            setViewMode('progress-tree');
+          }
         }}
       />
     );
@@ -325,9 +485,23 @@ function AppContent() {
         testSequence={selectedChallenge.sequence as any}
         testLevel={selectedLevel}
         onActivityComplete={(score: number, duration: number) => {
-          // Go back to progress tree after completing activity
-          setSelectedChallenge(null);
-          setViewMode('progress-tree');
+          // Calculate result data for insights screen
+          const isPerfect = score >= 95;
+          const baseXP = 10;
+          const perfectBonus = isPerfect ? 10 : 0;
+          const streakBonus = Math.min((progress?.streak || 0) * 0.5, 5);
+          const xpEarned = Math.round(baseXP + perfectBonus + streakBonus);
+
+          // Store result and show insights (keep selectedChallenge for retry)
+          setChallengeResult({
+            challengeType: selectedChallenge.type,
+            level: selectedLevel,
+            score,
+            duration,
+            isPerfect,
+            xpEarned,
+          });
+          setViewMode('insights-screen');
         }}
       />
     );

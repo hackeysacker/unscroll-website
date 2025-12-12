@@ -41,7 +41,6 @@ export function GazeHoldChallenge({ duration, onComplete, level = 1, onBack }: G
   const [trackingStatus, setTrackingStatus] = useState<TrackingStatus>('checking');
   const [trackingMode, setTrackingMode] = useState<TrackingMode>('none');
   const [faceData, setFaceData] = useState<FaceTrackingData | null>(null);
-  const [countdown, setCountdown] = useState<number | null>(null);
   const [useTouchFallback, setUseTouchFallback] = useState(false);
 
   // Tracking refs
@@ -67,21 +66,8 @@ export function GazeHoldChallenge({ duration, onComplete, level = 1, onBack }: G
   const startWithTouchMode = useCallback(() => {
     setUseTouchFallback(true);
     setTrackingMode('touch');
-    setTrackingStatus('ready');
-    setCountdown(3);
-
-    let count = 3;
-    const countdownInterval = setInterval(() => {
-      count--;
-      if (count > 0) {
-        setCountdown(count);
-      } else {
-        setCountdown(null);
-        setIsActive(true);
-        setTrackingStatus('tracking');
-        clearInterval(countdownInterval);
-      }
-    }, 1000);
+    setTrackingStatus('tracking');
+    setIsActive(true);
   }, []);
 
   // Open settings to grant camera permission
@@ -156,22 +142,8 @@ export function GazeHoldChallenge({ duration, onComplete, level = 1, onBack }: G
           }
         });
 
-        setTrackingStatus('ready');
-        setCountdown(3);
-
-        // Start countdown
-        let count = 3;
-        const countdownInterval = setInterval(() => {
-          count--;
-          if (count > 0) {
-            setCountdown(count);
-          } else {
-            setCountdown(null);
-            setIsActive(true);
-            setTrackingStatus('tracking');
-            clearInterval(countdownInterval);
-          }
-        }, 1000);
+        setTrackingStatus('tracking');
+        setIsActive(true);
       } catch (error) {
         console.error('Face tracking init error:', error);
         if (mounted) {
@@ -228,7 +200,7 @@ export function GazeHoldChallenge({ duration, onComplete, level = 1, onBack }: G
     }, 100);
   }, [faceData, isActive, useTouchFallback, faceIndicatorAnim]);
 
-  // Timer countdown
+  // Timer
   useEffect(() => {
     if (!isActive) return;
 
@@ -469,35 +441,6 @@ export function GazeHoldChallenge({ duration, onComplete, level = 1, onBack }: G
     );
   }
 
-  // Countdown state
-  if (countdown !== null) {
-    return (
-      <LinearGradient
-        colors={['#1a1a2e', '#16213e', '#0f3460']}
-        style={styles.container}
-      >
-        <View style={styles.centerContent}>
-          <Text style={styles.countdownNumber}>{countdown}</Text>
-          <Text style={styles.countdownText}>Get ready to focus</Text>
-          <Text style={styles.countdownSubtext}>
-            {useTouchFallback ? 'Press and hold the dot' : 'Keep your eyes on the dot'}
-          </Text>
-          {!useTouchFallback && faceData?.isFacePresent && (
-            <View style={styles.faceDetectedBadge}>
-              <Text style={styles.faceDetectedText}>✓ Face detected</Text>
-            </View>
-          )}
-          <View style={styles.trackingModeBadge}>
-            <Text style={styles.trackingModeText}>
-              {trackingMode === 'arkit' ? '🎯 TrueDepth Tracking' : 
-               trackingMode === 'vision' ? '📷 Camera Tracking' : 
-               '👆 Touch Mode'}
-            </Text>
-          </View>
-        </View>
-      </LinearGradient>
-    );
-  }
 
   // Main challenge UI
   return (
@@ -756,23 +699,6 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.4)',
   },
 
-  // Countdown
-  countdownNumber: {
-    fontSize: 120,
-    fontWeight: 'bold',
-    color: '#6366F1',
-  },
-  countdownText: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginTop: 16,
-  },
-  countdownSubtext: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.6)',
-    marginTop: 8,
-  },
   faceDetectedBadge: {
     marginTop: 32,
     backgroundColor: 'rgba(16, 185, 129, 0.2)',

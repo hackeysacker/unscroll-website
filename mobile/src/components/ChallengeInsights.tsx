@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Animated, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import { useAttentionAvatar } from '@/contexts/AttentionAvatarContext';
-import { Header } from '@/components/ui/Header';
-import { Button } from '@/components/ui/Button';
 import { getChallengeName } from '@/lib/challenge-progression';
 import type { ChallengeType } from '@/types';
-import * as Haptics from 'expo-haptics';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface ChallengeInsightsProps {
   challengeType: ChallengeType;
@@ -23,7 +23,7 @@ interface ChallengeInsightsProps {
 
 /**
  * Beautiful insights screen shown after each challenge
- * Shows performance breakdown, tips, and next steps
+ * Shows performance breakdown, pass/fail status, and tips
  */
 export function ChallengeInsights({
   challengeType,
@@ -36,9 +36,15 @@ export function ChallengeInsights({
   onRetry,
   onBack,
 }: ChallengeInsightsProps) {
-  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { triggerReaction } = useAttentionAvatar();
-  const [showContent, setShowContent] = useState(false);
+  
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+  const scoreAnim = useRef(new Animated.Value(0)).current;
+  const [animatedScore, setAnimatedScore] = useState(0);
+
+  const isPassed = score >= 80;
 
   useEffect(() => {
     // Trigger avatar reaction based on score
@@ -54,7 +60,32 @@ export function ChallengeInsights({
     }
 
     // Animate content in
-    setTimeout(() => setShowContent(true), 300);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scoreAnim, {
+        toValue: score,
+        duration: 1200,
+        useNativeDriver: false,
+      }),
+    ]).start();
+
+    // Animate score counter
+    const listener = scoreAnim.addListener(({ value }) => {
+      setAnimatedScore(Math.round(value));
+    });
+
+    return () => {
+      scoreAnim.removeListener(listener);
+    };
   }, []);
 
   const getScoreEmoji = () => {
@@ -67,19 +98,19 @@ export function ChallengeInsights({
   };
 
   const getScoreMessage = () => {
-    if (isPerfect) return 'PERFECT!';
+    if (isPerfect) return 'Perfect!';
     if (score >= 90) return 'Excellent!';
-    if (score >= 80) return 'Great Job!';
+    if (score >= 80) return 'Passed!';
     if (score >= 70) return 'Good Work!';
-    if (score >= 60) return 'Keep Going!';
-    return 'Try Again!';
+    if (score >= 60) return 'Almost There!';
+    return 'Failed';
   };
 
   const getScoreColor = () => {
     if (isPerfect) return '#FFD700';
-    if (score >= 80) return colors.success || '#00FF88';
-    if (score >= 60) return colors.warning || '#FFB800';
-    return colors.error || '#FF4444';
+    if (score >= 80) return '#10B981';
+    if (score >= 60) return '#F59E0B';
+    return '#EF4444';
   };
 
   const getInsight = () => {
@@ -129,168 +160,223 @@ export function ChallengeInsights({
     return tips[challengeType] || tips.default;
   };
 
+  // Calculate performance metrics deterministically based on score
   const getPerformanceBreakdown = () => {
-    // Calculate performance metrics based on score
-    const stability = Math.round(score * 0.95 + Math.random() * 5);
-    const accuracy = Math.round(score * 0.92 + Math.random() * 8);
-    const speed = Math.round((1000 / (duration / 1000)) * 10);
+    const stability = Math.min(100, Math.round(score * 0.92 + 8));
+    const accuracy = Math.min(100, Math.round(score * 0.88 + 10));
     
-    return { stability, accuracy, speed };
+    return { stability, accuracy };
   };
 
   const breakdown = getPerformanceBreakdown();
+  const scoreColor = getScoreColor();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header 
-        title="Challenge Complete" 
-        onBack={onBack}
-      />
-      
-      {/* Animated background */}
+    <View style={[styles.container, { paddingTop: Math.max(insets.top, 12) }]}>
+      {/* Background */}
       <LinearGradient
-        colors={[
-          colors.background,
-          isPerfect ? 'rgba(255, 215, 0, 0.1)' : 'rgba(100, 150, 255, 0.05)',
-          colors.background,
-        ]}
+        colors={['#0F172A', '#1E293B', '#334155']}
         style={StyleSheet.absoluteFill}
       />
 
-      {showContent && (
-        <View style={styles.content}>
-          {/* Score Display */}
-          <View style={styles.scoreSection}>
-            <Text style={styles.emoji}>{getScoreEmoji()}</Text>
-            <Text style={[styles.scoreMessage, { color: getScoreColor() }]}>
-              {getScoreMessage()}
-            </Text>
-            <View style={styles.scoreCircle}>
-              <Text style={[styles.scoreNumber, { color: getScoreColor() }]}>
-                {score}
-              </Text>
-              <Text style={[styles.scoreLabel, { color: colors.mutedForeground }]}>
-                SCORE
-              </Text>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onBack();
+          }}
+          style={styles.backButton}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.backIcon}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Challenge Complete</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      <Animated.View
+        style={[
+          styles.contentWrapper,
+          {
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+          },
+        ]}
+      >
+        <View style={styles.contentContainer}>
+          {/* Top Section - Score & Status */}
+          <View style={styles.topSection}>
+            {/* Emoji and Badge */}
+            <View style={styles.emojiBadgeContainer}>
+              <Text style={styles.emoji}>{getScoreEmoji()}</Text>
+              <View style={[
+                styles.passFailBadge,
+                { 
+                  backgroundColor: isPassed ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                  borderColor: isPassed ? '#10B981' : '#EF4444',
+                }
+              ]}>
+                <Text style={[
+                  styles.passFailText,
+                  { color: isPassed ? '#10B981' : '#EF4444' }
+                ]}>
+                  {isPassed ? '✓ PASSED' : '✗ FAILED'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Score Display */}
+            <View style={styles.scoreDisplayContainer}>
+              <LinearGradient
+                colors={[scoreColor + '20', scoreColor + '05']}
+                style={styles.scoreCircleGradient}
+              >
+                <View style={[
+                  styles.scoreCircle,
+                  { borderColor: scoreColor + '60' }
+                ]}>
+                  <Animated.Text style={[styles.scoreNumber, { color: scoreColor }]}>
+                    {animatedScore}
+                  </Animated.Text>
+                  <Text style={styles.scoreLabel}>SCORE</Text>
+                </View>
+              </LinearGradient>
+              
+              <View style={styles.scoreInfoColumn}>
+                <Text style={[styles.scoreMessage, { color: scoreColor }]}>
+                  {getScoreMessage()}
+                </Text>
+                <Text style={styles.challengeName} numberOfLines={1}>
+                  {getChallengeName(challengeType)}
+                </Text>
+                <View style={styles.challengeMeta}>
+                  <View style={styles.metaBadge}>
+                    <Text style={styles.metaText}>Lv {level}</Text>
+                  </View>
+                  <View style={styles.metaBadge}>
+                    <Text style={styles.metaText}>{(duration / 1000).toFixed(1)}s</Text>
+                  </View>
+                </View>
+                <View style={styles.xpBadge}>
+                  <Text style={styles.xpIcon}>✨</Text>
+                  <Text style={styles.xpValue}>+{xpEarned} XP</Text>
+                </View>
+              </View>
             </View>
           </View>
 
-          {/* Challenge Info */}
-          <View style={[styles.challengeInfoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.challengeInfoName, { color: colors.foreground }]}>
-              {getChallengeName(challengeType)}
-            </Text>
-            <Text style={[styles.challengeInfoLevel, { color: colors.mutedForeground }]}>
-              Level {level} • {(duration / 1000).toFixed(1)}s
-            </Text>
-          </View>
-
-          {/* Performance Breakdown */}
-          <View style={[styles.performanceCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.performanceTitle, { color: colors.foreground }]}>
-              📊 Performance Breakdown
-            </Text>
-            
-            <View style={styles.metricRow}>
-              <Text style={[styles.metricLabel, { color: colors.mutedForeground }]}>Focus Score</Text>
-              <View style={styles.metricValue}>
-                <View style={[styles.metricBar, { backgroundColor: colors.muted }]}>
+          {/* Performance Metrics */}
+          <View style={styles.performanceCard}>
+            <Text style={styles.performanceTitle}>Performance Breakdown</Text>
+            <View style={styles.metricsGrid}>
+              <View style={styles.metricItem}>
+                <View style={styles.metricBarContainer}>
                   <View 
                     style={[
                       styles.metricBarFill, 
                       { 
-                        width: `${score}%`, 
-                        backgroundColor: getScoreColor() 
+                        width: `${Math.round(score)}%`, 
+                        backgroundColor: scoreColor 
                       }
                     ]} 
                   />
                 </View>
-                <Text style={[styles.metricNumber, { color: colors.foreground }]}>{score}%</Text>
+                <Text style={styles.metricLabel}>Focus</Text>
+                <Text style={[styles.metricValue, { color: scoreColor }]}>{Math.round(score)}%</Text>
               </View>
-            </View>
 
-            <View style={styles.metricRow}>
-              <Text style={[styles.metricLabel, { color: colors.mutedForeground }]}>Stability</Text>
-              <View style={styles.metricValue}>
-                <View style={[styles.metricBar, { backgroundColor: colors.muted }]}>
+              <View style={styles.metricItem}>
+                <View style={styles.metricBarContainer}>
                   <View 
                     style={[
                       styles.metricBarFill, 
                       { 
                         width: `${breakdown.stability}%`, 
-                        backgroundColor: colors.primary 
+                        backgroundColor: '#6366F1' 
                       }
                     ]} 
                   />
                 </View>
-                <Text style={[styles.metricNumber, { color: colors.foreground }]}>{breakdown.stability}%</Text>
+                <Text style={styles.metricLabel}>Stability</Text>
+                <Text style={styles.metricValue}>{breakdown.stability}%</Text>
               </View>
-            </View>
 
-            <View style={styles.metricRow}>
-              <Text style={[styles.metricLabel, { color: colors.mutedForeground }]}>Accuracy</Text>
-              <View style={styles.metricValue}>
-                <View style={[styles.metricBar, { backgroundColor: colors.muted }]}>
+              <View style={styles.metricItem}>
+                <View style={styles.metricBarContainer}>
                   <View 
                     style={[
                       styles.metricBarFill, 
                       { 
                         width: `${breakdown.accuracy}%`, 
-                        backgroundColor: colors.secondary 
+                        backgroundColor: '#8B5CF6' 
                       }
                     ]} 
                   />
                 </View>
-                <Text style={[styles.metricNumber, { color: colors.foreground }]}>{breakdown.accuracy}%</Text>
+                <Text style={styles.metricLabel}>Accuracy</Text>
+                <Text style={styles.metricValue}>{breakdown.accuracy}%</Text>
               </View>
             </View>
-
-            <View style={styles.xpRow}>
-              <Text style={[styles.xpLabel, { color: colors.mutedForeground }]}>XP Earned</Text>
-              <Text style={[styles.xpValue, { color: colors.primary }]}>+{xpEarned} XP</Text>
-            </View>
           </View>
 
-          {/* Insights */}
-          <View style={[styles.insightCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.insightTitle, { color: colors.primary }]}>
-              💡 Insight
-            </Text>
-            <Text style={[styles.insightText, { color: colors.foreground }]}>
-              {getInsight()}
-            </Text>
-          </View>
+          {/* Insight & Tip Cards */}
+          <View style={styles.insightsRow}>
+            <LinearGradient
+              colors={['rgba(99, 102, 241, 0.15)', 'rgba(99, 102, 241, 0.05)']}
+              style={styles.insightCard}
+            >
+              <Text style={styles.insightEmoji}>💡</Text>
+              <Text style={styles.insightTitle}>Insight</Text>
+              <Text style={styles.insightText} numberOfLines={3}>{getInsight()}</Text>
+            </LinearGradient>
 
-          {/* Tip */}
-          <View style={[styles.tipCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.tipTitle, { color: colors.secondary }]}>
-              🎯 Pro Tip
-            </Text>
-            <Text style={[styles.tipText, { color: colors.foreground }]}>
-              {getTip()}
-            </Text>
+            <LinearGradient
+              colors={['rgba(139, 92, 246, 0.15)', 'rgba(139, 92, 246, 0.05)']}
+              style={styles.tipCard}
+            >
+              <Text style={styles.tipEmoji}>🎯</Text>
+              <Text style={styles.tipTitle}>Pro Tip</Text>
+              <Text style={styles.tipText} numberOfLines={3}>{getTip()}</Text>
+            </LinearGradient>
           </View>
 
           {/* Action Buttons */}
           <View style={styles.actions}>
-            {score < 100 && (
-              <Button
-                variant="outline"
-                onPress={onRetry}
+            {!isPassed && (
+              <TouchableOpacity
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  onRetry();
+                }}
                 style={styles.retryButton}
+                activeOpacity={0.8}
               >
-                🔄 Try Again
-              </Button>
+                <Text style={styles.retryButtonText}>🔄 Try Again</Text>
+              </TouchableOpacity>
             )}
-            <Button
-              onPress={onContinue}
-              style={styles.continueButton}
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                onContinue();
+              }}
+              style={styles.continueButtonContainer}
+              activeOpacity={0.9}
             >
-              🚀 Back to Progress Path
-            </Button>
+              <LinearGradient
+                colors={isPassed ? ['#6366F1', '#8B5CF6'] : ['#6B7280', '#4B5563']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.continueButton}
+              >
+                <Text style={styles.continueButtonText}>
+                  {isPassed ? '✓ Continue' : '← Go Back'}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
         </View>
-      )}
+      </Animated.View>
     </View>
   );
 }
@@ -299,158 +385,369 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
-    flex: 1,
-    padding: 20,
-    paddingTop: 20,
-  },
-  scoreSection: {
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  emoji: {
-    fontSize: 80,
-    marginBottom: 16,
-  },
-  scoreMessage: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  scoreCircle: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: 'rgba(100, 150, 255, 0.1)',
-    borderWidth: 4,
-    borderColor: 'rgba(100, 150, 255, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  scoreNumber: {
-    fontSize: 48,
-    fontWeight: 'bold',
-  },
-  scoreLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 4,
-  },
-  challengeInfoCard: {
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: 16,
-    alignItems: 'center',
-  },
-  challengeInfoName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  challengeInfoLevel: {
-    fontSize: 14,
-  },
-  performanceCard: {
-    padding: 20,
-    borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: 16,
-  },
-  performanceTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  metricRow: {
-    marginBottom: 16,
-  },
-  metricLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  metricValue: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    zIndex: 10,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  backIcon: {
+    fontSize: 24,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  headerSpacer: {
+    width: 40,
+  },
+  contentWrapper: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  contentContainer: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'space-between',
+    paddingBottom: 24,
+  },
+  topSection: {
+    alignItems: 'center',
+  },
+  emojiBadgeContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
     gap: 12,
   },
-  metricBar: {
+  emoji: {
+    fontSize: 64,
+  },
+  passFailBadge: {
+    paddingHorizontal: 22,
+    paddingVertical: 10,
+    borderRadius: 22,
+    borderWidth: 2.5,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#10B981',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.4,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  passFailText: {
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+  },
+  scoreDisplayContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+    width: '100%',
+    paddingHorizontal: 8,
+  },
+  scoreCircleGradient: {
+    borderRadius: 55,
+    padding: 3,
+  },
+  scoreCircle: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 3.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+  },
+  scoreNumber: {
+    fontSize: 44,
+    fontWeight: '800',
+  },
+  scoreLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: 'rgba(255, 255, 255, 0.5)',
+    marginTop: 4,
+    letterSpacing: 1,
+  },
+  scoreInfoColumn: {
     flex: 1,
-    height: 8,
-    borderRadius: 4,
+    gap: 8,
+  },
+  scoreMessage: {
+    fontSize: 26,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  challengeName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  challengeMeta: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  metaBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  metaText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  xpBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(99, 102, 241, 0.25)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.4)',
+    alignSelf: 'flex-start',
+    gap: 6,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#6366F1',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  xpIcon: {
+    fontSize: 14,
+  },
+  xpValue: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#A5B4FC',
+  },
+  performanceCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 20,
+    padding: 20,
+    marginVertical: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  performanceTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 16,
+    letterSpacing: 0.5,
+  },
+  metricsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+  metricItem: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 10,
+  },
+  metricBarContainer: {
+    width: '100%',
+    height: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 5,
     overflow: 'hidden',
+    marginBottom: 4,
   },
   metricBarFill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 5,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+      },
+    }),
   },
-  metricNumber: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    width: 50,
-    textAlign: 'right',
-  },
-  xpRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(100, 116, 139, 0.2)',
-  },
-  xpLabel: {
-    fontSize: 14,
+  metricLabel: {
+    fontSize: 11,
     fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.7)',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  xpValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  metricValue: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FFFFFF',
   },
-  insightCard: {
-    padding: 20,
-    borderRadius: 16,
-    borderWidth: 1,
+  insightsRow: {
+    flexDirection: 'row',
+    gap: 12,
     marginBottom: 16,
   },
+  insightCard: {
+    flex: 1,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.3)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#6366F1',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  insightEmoji: {
+    fontSize: 24,
+    marginBottom: 6,
+  },
   insightTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#A5B4FC',
     marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   insightText: {
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 12,
+    lineHeight: 18,
+    color: '#FFFFFF',
+    fontWeight: '500',
   },
   tipCard: {
-    padding: 20,
+    flex: 1,
     borderRadius: 16,
+    padding: 16,
     borderWidth: 1,
-    marginBottom: 24,
+    borderColor: 'rgba(139, 92, 246, 0.3)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#8B5CF6',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  tipEmoji: {
+    fontSize: 24,
+    marginBottom: 6,
   },
   tipTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#C4B5FD',
     marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   tipText: {
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 12,
+    lineHeight: 18,
+    color: '#FFFFFF',
+    fontWeight: '500',
   },
   actions: {
     gap: 12,
   },
   retryButton: {
-    marginBottom: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 14,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  retryButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  continueButtonContainer: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#6366F1',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.4,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
   },
   continueButton: {
-    width: '100%',
+    padding: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  backToPathButton: {
-    width: '100%',
-    marginTop: 4,
+  continueButtonText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
 });
-

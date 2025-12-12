@@ -6,6 +6,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { Card } from '@/components/ui/Card';
 import type { PersonalizedTrainingPlan, ChallengeType } from '@/types';
 import { STORAGE_KEYS, saveToStorage, loadFromStorage } from '@/lib/storage';
+import { supabase } from '@/lib/supabase';
+import * as db from '@/lib/database';
 
 interface PersonalizedTrainingPlanProps {
   onBack: () => void;
@@ -103,19 +105,35 @@ export function PersonalizedTrainingPlanComponent({ onBack, onStartChallenge }: 
   React.useEffect(() => {
     if (!user || !progress || !skillTree || !stats) return;
 
-    const savedPlan = loadFromStorage<PersonalizedTrainingPlan>(STORAGE_KEYS.TRAINING_PLAN);
+    async function loadPlan() {
+      const savedPlan = await loadFromStorage<PersonalizedTrainingPlan>(STORAGE_KEYS.TRAINING_PLAN);
 
-    const needsRegeneration = !savedPlan ||
-      savedPlan.userId !== user.id ||
-      Date.now() - savedPlan.lastUpdated > 24 * 60 * 60 * 1000;
+      const needsRegeneration = !savedPlan ||
+        savedPlan.userId !== user.id ||
+        Date.now() - savedPlan.lastUpdated > 24 * 60 * 60 * 1000;
 
-    if (needsRegeneration) {
-      const newPlan = generateTrainingPlan(user.id, progress, skillTree, stats);
-      setPlan(newPlan);
-      saveToStorage(STORAGE_KEYS.TRAINING_PLAN, newPlan);
-    } else {
-      setPlan(savedPlan);
+      if (needsRegeneration) {
+        const newPlan = generateTrainingPlan(user.id, progress, skillTree, stats);
+        setPlan(newPlan);
+        await saveToStorage(STORAGE_KEYS.TRAINING_PLAN, newPlan);
+
+        // Sync to Supabase
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          db.saveTrainingPlan(user.id, {
+            plan_type: 'personalized',
+            exercises: newPlan.recommendations.map(r => r.challengeType),
+            is_active: true,
+          }).catch((error) => {
+            console.error('Failed to sync training plan to Supabase:', error);
+          });
+        }
+      } else {
+        setPlan(savedPlan);
+      }
     }
+
+    loadPlan();
   }, [user, progress, skillTree, stats]);
 
   if (!plan || !progress || !skillTree) {

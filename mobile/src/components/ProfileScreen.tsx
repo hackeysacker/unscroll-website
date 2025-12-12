@@ -15,6 +15,7 @@ import { BADGE_DEFINITIONS, getBadgeProgressPercentage } from '@/lib/badge-mecha
 import { loadFromStorage, STORAGE_KEYS } from '@/lib/storage';
 import type { BadgeType, ChallengeResult } from '@/types';
 import Svg, { Path, Circle, Rect, Polygon, Ellipse } from 'react-native-svg';
+import { FocusShieldControl } from './FocusShieldControl';
 
 // SVG Icon Components
 interface IconProps {
@@ -216,7 +217,6 @@ export function ProfileScreen({ onBack, onNavigate }: ProfileScreenProps) {
   const [editDisplayName, setEditDisplayName] = useState(user?.displayName || '');
   const [editAvatarEmoji, setEditAvatarEmoji] = useState(user?.avatarEmoji || '');
   const [isSaving, setIsSaving] = useState(false);
-  const [achievementFilter, setAchievementFilter] = useState<'all' | 'unlocked' | 'locked' | 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary'>('all');
   const [challengeResults, setChallengeResults] = useState<ChallengeResult[]>([]);
 
   // Load challenge results for badge progress calculation
@@ -230,7 +230,29 @@ export function ProfileScreen({ onBack, onNavigate }: ProfileScreenProps) {
     loadChallengeResults();
   }, [user]);
 
-  // Get all badges with their unlock status
+  // Get recent completed achievements (last 6)
+  const recentAchievements = useMemo(() => {
+    if (!badgeProgress || !progress || !skillTree) return [];
+    
+    // Get all unlocked badges with their unlock timestamp
+    const unlockedBadgesWithData = badgeProgress.unlockedBadges.map(badge => {
+      const definition = BADGE_DEFINITIONS[badge.type];
+      return {
+        ...badge,
+        name: definition.name,
+        description: definition.description,
+        icon: definition.icon,
+        rarity: definition.rarity,
+      };
+    });
+    
+    // Sort by unlock time (most recent first) and take last 6
+    return unlockedBadgesWithData
+      .sort((a, b) => b.unlockedAt - a.unlockedAt)
+      .slice(0, 6);
+  }, [badgeProgress, progress, skillTree]);
+
+  // Get all badges for stats
   const allBadges = useMemo(() => {
     if (!badgeProgress || !progress || !skillTree) return [];
     
@@ -240,40 +262,22 @@ export function ProfileScreen({ onBack, onNavigate }: ProfileScreenProps) {
     return allBadgeTypes.map(badgeType => {
       const definition = BADGE_DEFINITIONS[badgeType];
       const isUnlocked = unlockedTypes.has(badgeType);
-      const badgeProgressData = getBadgeProgressPercentage(badgeType, badgeProgress, progress, skillTree, challengeResults);
       
       return {
         type: badgeType,
-        name: definition.name,
-        description: definition.description,
-        icon: definition.icon,
-        rarity: definition.rarity,
         unlocked: isUnlocked,
-        progress: badgeProgressData.percentage,
       };
-    }).sort((a, b) => {
-      // Sort: unlocked first, then by rarity (legendary -> common)
-      if (a.unlocked !== b.unlocked) return a.unlocked ? -1 : 1;
-      const rarityOrder = { legendary: 0, epic: 1, rare: 2, uncommon: 3, common: 4 };
-      return rarityOrder[a.rarity] - rarityOrder[b.rarity];
     });
-  }, [badgeProgress, progress, skillTree, challengeResults]);
-
-  // Filter badges based on selected filter
-  const filteredBadges = useMemo(() => {
-    if (achievementFilter === 'all') return allBadges;
-    if (achievementFilter === 'unlocked') return allBadges.filter(b => b.unlocked);
-    if (achievementFilter === 'locked') return allBadges.filter(b => !b.unlocked);
-    return allBadges.filter(b => b.rarity === achievementFilter);
-  }, [allBadges, achievementFilter]);
+  }, [badgeProgress, progress, skillTree]);
 
   const unlockedCount = allBadges.filter(b => b.unlocked).length;
   const totalCount = allBadges.length;
 
   const menuItems = [
     { id: 'edit-profile', IconComponent: ProfileIcon, title: 'Edit Profile', color: '#6366F1' },
+    { id: 'achievements', IconComponent: TrophyIcon, title: 'Achievements', color: '#F59E0B' },
     { id: 'settings', IconComponent: SettingsIcon, title: 'Settings', color: '#10B981' },
-    { id: 'insights', IconComponent: ChartIcon, title: 'Statistics', color: '#F59E0B' },
+    { id: 'insights', IconComponent: ChartIcon, title: 'Statistics', color: '#8B5CF6' },
     { id: 'premium', IconComponent: CrownIcon, title: 'Go Premium', color: '#EC4899' },
   ];
 
@@ -284,6 +288,10 @@ export function ProfileScreen({ onBack, onNavigate }: ProfileScreenProps) {
       setEditDisplayName(user?.displayName || '');
       setEditAvatarEmoji(user?.avatarEmoji || '');
       setIsEditModalVisible(true);
+      return;
+    }
+    if (itemId === 'achievements') {
+      onNavigate('achievements');
       return;
     }
     onNavigate(itemId);
@@ -312,6 +320,26 @@ export function ProfileScreen({ onBack, onNavigate }: ProfileScreenProps) {
 
   const handleCloseModal = () => {
     setIsEditModalVisible(false);
+  };
+
+  // Helper function to get time ago
+  const getTimeAgo = (date: Date): string => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    const weeks = Math.floor(diffDays / 7);
+    if (weeks < 4) return `${weeks}w ago`;
+    
+    const months = Math.floor(diffDays / 30);
+    return `${months}mo ago`;
   };
 
   // Get display name for profile
@@ -382,107 +410,54 @@ export function ProfileScreen({ onBack, onNavigate }: ProfileScreenProps) {
           </View>
         </LinearGradient>
 
-        {/* Achievements */}
-        <View style={styles.achievementsHeader}>
-          <View>
-            <Text style={styles.sectionTitle}>Achievements</Text>
-            <Text style={styles.achievementCount}>
-              {unlockedCount} / {totalCount} unlocked
-            </Text>
-          </View>
-        </View>
+        {/* Focus Shield Control */}
+        <FocusShieldControl />
 
-        {/* Filter Buttons */}
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          style={styles.filterContainer}
-          contentContainerStyle={styles.filterContent}
-        >
-          {(['all', 'unlocked', 'locked', 'common', 'uncommon', 'rare', 'epic', 'legendary'] as const).map((filter) => (
-            <TouchableOpacity
-              key={filter}
-              style={[
-                styles.filterButton,
-                achievementFilter === filter && styles.filterButtonActive,
-              ]}
-              onPress={() => {
-                Haptics.selectionAsync();
-                setAchievementFilter(filter);
-              }}
-            >
-              <Text
-                style={[
-                  styles.filterButtonText,
-                  achievementFilter === filter && styles.filterButtonTextActive,
-                ]}
-              >
-                {filter.charAt(0).toUpperCase() + filter.slice(1)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Achievements Grid */}
-        <View style={styles.achievementsGrid}>
-          {filteredBadges.map((badge) => {
-            const rarityColors = {
-              common: '#9CA3AF',
-              uncommon: '#10B981',
-              rare: '#3B82F6',
-              epic: '#8B5CF6',
-              legendary: '#F59E0B',
-            };
-            const rarityColor = rarityColors[badge.rarity];
-
-            return (
-              <TouchableOpacity
-                key={badge.type}
-                style={[
-                  styles.achievementCard,
-                  !badge.unlocked && styles.achievementLocked,
-                  badge.unlocked && { borderColor: rarityColor, borderWidth: 2 },
-                ]}
-                activeOpacity={0.7}
-              >
-                <View style={styles.achievementIconContainer}>
-                  <Text style={styles.achievementEmoji}>{badge.icon}</Text>
-                  {badge.unlocked && (
-                    <View style={[styles.rarityBadge, { backgroundColor: rarityColor }]}>
-                      <Text style={styles.rarityText}>{badge.rarity.charAt(0).toUpperCase()}</Text>
-                    </View>
-                  )}
-                </View>
-                <Text
-                  style={[
-                    styles.achievementTitle,
-                    !badge.unlocked && styles.achievementTitleLocked,
-                  ]}
-                  numberOfLines={1}
-                >
-                  {badge.name}
+        {/* Recent Achievements */}
+        {recentAchievements.length > 0 && (
+          <>
+            <View style={styles.achievementsHeader}>
+              <View>
+                <Text style={styles.sectionTitle}>Recent Achievements</Text>
+                <Text style={styles.achievementCount}>
+                  {allBadges.filter(b => b.unlocked).length} / {allBadges.length} unlocked
                 </Text>
-                <Text
-                  style={[
-                    styles.achievementDescription,
-                    !badge.unlocked && styles.achievementDescriptionLocked,
-                  ]}
-                  numberOfLines={2}
-                >
-                  {badge.description}
-                </Text>
-                {!badge.unlocked && badge.progress > 0 && (
-                  <View style={styles.progressBarContainer}>
-                    <View style={styles.progressBarBg}>
-                      <View style={[styles.progressBarFill, { width: `${badge.progress}%` }]} />
+              </View>
+            </View>
+
+            {/* Recent Achievements List */}
+            <View style={styles.recentAchievementsContainer}>
+              {recentAchievements.map((badge) => {
+                const rarityColors = {
+                  common: '#9CA3AF',
+                  uncommon: '#10B981',
+                  rare: '#3B82F6',
+                  epic: '#8B5CF6',
+                  legendary: '#F59E0B',
+                };
+                const rarityColor = rarityColors[badge.rarity];
+                const unlockedDate = new Date(badge.unlockedAt);
+                const timeAgo = getTimeAgo(unlockedDate);
+
+                return (
+                  <View
+                    key={badge.id}
+                    style={[
+                      styles.recentAchievementCard,
+                      { borderLeftColor: rarityColor, borderLeftWidth: 3 },
+                    ]}
+                  >
+                    <Text style={styles.recentAchievementEmoji}>{badge.icon}</Text>
+                    <View style={styles.recentAchievementInfo}>
+                      <Text style={styles.recentAchievementTitle}>{badge.name}</Text>
+                      <Text style={styles.recentAchievementTime}>{timeAgo}</Text>
                     </View>
-                    <Text style={styles.progressText}>{badge.progress}%</Text>
                   </View>
-                )}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+                );
+              })}
+            </View>
+          </>
+        )}
 
         {/* Menu Items */}
         <Text style={styles.sectionTitle}>Quick Actions</Text>
@@ -729,6 +704,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+    marginTop: 8,
   },
   sectionTitle: {
     fontSize: 18,
@@ -741,118 +717,33 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.6)',
     fontWeight: '500',
   },
-  filterContainer: {
-    marginBottom: 16,
-  },
-  filterContent: {
-    paddingRight: 16,
-  },
-  filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  filterButtonActive: {
-    backgroundColor: '#6366F1',
-    borderColor: '#8B5CF6',
-  },
-  filterButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
-  filterButtonTextActive: {
-    color: '#FFFFFF',
-  },
-  achievementsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+  recentAchievementsContainer: {
     marginBottom: 24,
   },
-  achievementCard: {
-    width: '48%',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
-    padding: 12,
+  recentAchievementCard: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 6,
   },
-  achievementLocked: {
-    opacity: 0.6,
+  recentAchievementEmoji: {
+    fontSize: 28,
+    marginRight: 12,
   },
-  achievementIconContainer: {
-    marginBottom: 8,
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
+  recentAchievementInfo: {
+    flex: 1,
   },
-  achievementEmoji: {
-    fontSize: 32,
-  },
-  rarityBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
-  },
-  rarityText: {
-    fontSize: 8,
-    fontWeight: '800',
+  recentAchievementTitle: {
+    fontSize: 14,
+    fontWeight: '600',
     color: '#FFFFFF',
+    marginBottom: 2,
   },
-  achievementTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  achievementTitleLocked: {
+  recentAchievementTime: {
+    fontSize: 11,
     color: 'rgba(255, 255, 255, 0.5)',
-  },
-  achievementDescription: {
-    fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.7)',
-    textAlign: 'center',
-    marginBottom: 8,
-    lineHeight: 14,
-  },
-  achievementDescriptionLocked: {
-    color: 'rgba(255, 255, 255, 0.4)',
-  },
-  progressBarContainer: {
-    width: '100%',
-    marginTop: 4,
-  },
-  progressBarBg: {
-    height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 2,
-    overflow: 'hidden',
-    marginBottom: 4,
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#6366F1',
-    borderRadius: 2,
-  },
-  progressText: {
-    fontSize: 9,
-    color: 'rgba(255, 255, 255, 0.5)',
-    textAlign: 'center',
   },
 
   // Menu Items

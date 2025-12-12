@@ -48,6 +48,7 @@ interface ActivityPlayerProps {
   isTest?: boolean;
   testSequence?: (ChallengeType | ExerciseType)[];
   testLevel?: number;
+  fixedLevel?: number; // For practices, use a fixed level for consistent durations
   onActivityComplete?: (score: number, duration: number) => void;
 }
 
@@ -57,6 +58,7 @@ export function ActivityPlayer({
   isTest,
   testSequence,
   testLevel,
+  fixedLevel,
   onActivityComplete,
 }: ActivityPlayerProps) {
   // If it's an exercise, use ExerciseRouter
@@ -78,13 +80,14 @@ export function ActivityPlayer({
   }
 
   // Otherwise, use ChallengePlayer for challenges
+  // Use fixedLevel if provided (for practices), otherwise use testLevel
   return (
     <ChallengePlayer
       onBack={onBack}
       preSelectedChallenge={activityType as ChallengeType}
       isTest={isTest}
       testSequence={testSequence as ChallengeType[]}
-      testLevel={testLevel}
+      testLevel={fixedLevel || testLevel}
       onChallengeComplete={onActivityComplete}
     />
   );

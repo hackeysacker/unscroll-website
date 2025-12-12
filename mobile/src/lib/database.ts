@@ -636,6 +636,176 @@ export async function logAnalyticsDataPoint(userId: string, metricType: string, 
 }
 
 // ============================================
+// WIND DOWN SESSIONS
+// ============================================
+
+export async function saveWindDownSession(userId: string, session: {
+  duration: number;
+  exercises_completed?: string[];
+  mood_before?: number;
+  mood_after?: number;
+}) {
+  try {
+    const { data, error } = await supabase
+      .from('wind_down_sessions')
+      .insert({
+        user_id: userId,
+        duration: session.duration,
+        exercises_completed: session.exercises_completed || [],
+        mood_before: session.mood_before || null,
+        mood_after: session.mood_after || null,
+        completed_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error saving wind down session:', error.message, error.details);
+    }
+    return data;
+  } catch (err) {
+    console.error('Error saving wind down session:', err);
+    return null;
+  }
+}
+
+export async function getWindDownSessions(userId: string, limit = 50) {
+  const { data, error } = await supabase
+    .from('wind_down_sessions')
+    .select('*')
+    .eq('user_id', userId)
+    .order('completed_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('Error fetching wind down sessions:', error);
+  }
+  return data || [];
+}
+
+// ============================================
+// WIND DOWN SETTINGS
+// ============================================
+
+export async function getWindDownSettings(userId: string) {
+  const { data, error } = await supabase
+    .from('wind_down_settings')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error fetching wind down settings:', error);
+  }
+  return data;
+}
+
+export async function updateWindDownSettings(userId: string, updates: {
+  preferred_duration?: number;
+  preferred_exercises?: string[];
+  reminder_enabled?: boolean;
+  reminder_time?: string;
+}) {
+  try {
+    const { data, error } = await supabase
+      .from('wind_down_settings')
+      .upsert({
+        user_id: userId,
+        ...updates,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating wind down settings:', error.message, error.details);
+    }
+    return data;
+  } catch (err) {
+    console.error('Error updating wind down settings:', err);
+    return null;
+  }
+}
+
+// ============================================
+// TRAINING PLANS
+// ============================================
+
+export async function saveTrainingPlan(userId: string, plan: {
+  plan_type: string;
+  exercises: string[];
+  duration_days?: number;
+  is_active?: boolean;
+}) {
+  try {
+    const { data, error } = await supabase
+      .from('training_plans')
+      .insert({
+        user_id: userId,
+        plan_type: plan.plan_type,
+        exercises: plan.exercises,
+        duration_days: plan.duration_days || null,
+        is_active: plan.is_active ?? true,
+        started_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error saving training plan:', error.message, error.details);
+    }
+    return data;
+  } catch (err) {
+    console.error('Error saving training plan:', err);
+    return null;
+  }
+}
+
+export async function getTrainingPlans(userId: string, activeOnly = true) {
+  let query = supabase
+    .from('training_plans')
+    .select('*')
+    .eq('user_id', userId)
+    .order('started_at', { ascending: false });
+
+  if (activeOnly) {
+    query = query.eq('is_active', true);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching training plans:', error);
+  }
+  return data || [];
+}
+
+export async function updateTrainingPlan(planId: string, updates: {
+  completed_at?: string;
+  is_active?: boolean;
+}) {
+  try {
+    const { data, error } = await supabase
+      .from('training_plans')
+      .update({
+        ...updates,
+        completed_at: updates.completed_at ? new Date(updates.completed_at).toISOString() : undefined,
+      })
+      .eq('id', planId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating training plan:', error.message, error.details);
+    }
+    return data;
+  } catch (err) {
+    console.error('Error updating training plan:', err);
+    return null;
+  }
+}
+
+// ============================================
 // SYNC HELPER
 // ============================================
 

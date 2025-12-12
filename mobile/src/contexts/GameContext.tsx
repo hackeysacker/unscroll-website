@@ -14,6 +14,10 @@ import type {
   HeartRefillActionType,
   BadgeProgress,
   Badge,
+  WindDownSession,
+  WindDownSettings,
+  DeepAnalytics,
+  PersonalizedTrainingPlan,
 } from '@/types';
 import { STORAGE_KEYS, saveToStorage, loadFromStorage } from '@/lib/storage';
 import {
@@ -42,14 +46,45 @@ import {
 import { generateUUID } from '@/lib/utils';
 import { useAuth } from './AuthContext';
 
-// Helper to sync game progress to Supabase
-async function syncToSupabase(userId: string, session: any, data: {
-  progress?: GameProgress;
-  skillTree?: SkillTreeProgress;
-  stats?: UserStats;
-  heartState?: HeartState;
-  challengeResult?: ChallengeResult;
-}) {
+/**
+ * Comprehensive Supabase sync helper for all game metrics
+ * 
+ * Syncs the following data types:
+ * - GameProgress: level, XP, streaks, session counts
+ * - SkillTreeProgress: focus, impulse control, distraction resistance scores
+ * - UserStats: attention time, gaze holds, accuracy, stability ratings, challenges completed
+ * - HeartState: current hearts, perfect streaks, refill timestamps, totals
+ * - ChallengeResult: individual challenge completions with scores, duration, XP, perfect status
+ * - BadgeProgress: unlocked badges (progress calculated dynamically from game state)
+ * - ProgressTreeState: unlocked nodes array, current path/node ID
+ * - ProgressNodes: individual node unlock/completion status (only unlocked nodes)
+ * - DailySession: session XP, completion status, challenges count
+ * - WindDownSession: completed wind down sessions with duration and exercises
+ * - WindDownSettings: preferred duration, exercises, reminder settings
+ * - DeepAnalytics: weekly/monthly trends, skill breakdown, improvement rates
+ * - PersonalizedTrainingPlan: generated training plans with recommendations
+ * 
+ * All syncs are fire-and-forget (non-blocking) to prevent blocking game flow.
+ * Errors are logged but don't affect gameplay - local storage remains the source of truth.
+ */
+async function syncToSupabase(
+  userId: string,
+  session: any,
+  data: {
+    progress?: GameProgress;
+    skillTree?: SkillTreeProgress;
+    stats?: UserStats;
+    heartState?: HeartState;
+    challengeResult?: ChallengeResult;
+    badgeProgress?: BadgeProgress;
+    progressTree?: ProgressTreeState;
+    dailySession?: DailySession;
+    windDownSession?: WindDownSession;
+    windDownSettings?: WindDownSettings;
+    deepAnalytics?: DeepAnalytics;
+    trainingPlan?: PersonalizedTrainingPlan;
+  }
+) {
   if (!session) return; // Not authenticated with Supabase
 
   try {
@@ -86,6 +121,8 @@ async function syncToSupabase(userId: string, session: any, data: {
         focus_accuracy: data.stats.focusAccuracy,
         impulse_control_score: data.stats.impulseControlScore,
         stability_rating: data.stats.stabilityRating,
+        total_exercises_completed: data.stats.challengesCompleted || 0,
+        // Note: average_score can be calculated from challenge_results if needed
       }));
     }
 
@@ -113,6 +150,119 @@ async function syncToSupabase(userId: string, session: any, data: {
         xp_earned: data.challengeResult.xpEarned,
         is_perfect: data.challengeResult.isPerfect,
       }));
+
+      // Also log analytics data point for tracking metrics over time
+      promises.push(db.logAnalyticsDataPoint(userId, 'challenge_score', data.challengeResult.score, {
+        challenge_type: data.challengeResult.type,
+        duration: data.challengeResult.duration,
+        is_perfect: data.challengeResult.isPerfect,
+      }).catch((err) => {
+        // Don't fail entire sync if analytics logging fails
+        console.error('Failed to log analytics data point:', err);
+      }));
+    }
+
+    // Sync badge progress and unlocked badges
+    if (data.badgeProgress) {
+      // Sync all unlocked badges - only sync badges that aren't already in the database
+      // (in production, you'd want to check which badges are already synced to avoid duplicates)
+      for (const badge of data.badgeProgress.unlockedBadges) {
+        promises.push(db.unlockBadge(userId, {
+          badge_type: badge.type,
+          name: badge.name,
+          description: badge.description,
+          icon: badge.icon,
+        }).catch((err) => {
+          // Ignore duplicate key errors (badge already unlocked)
+          if (err?.code !== '23505') {
+            console.error(`Error syncing badge ${badge.type}:`, err);
+          }
+        }));
+      }
+    }
+
+    // Sync progress tree state and nodes
+    if (data.progressTree) {
+      // Sync tree state (unlocked nodes, current path)
+      const unlockedNodeIds = data.progressTree.nodes
+        .filter(n => n.status !== 'locked')
+        .map(n => n.id);
+      
+      promises.push(db.updateProgressTreeState(userId, {
+        unlocked_nodes: unlockedNodeIds,
+        current_path: data.progressTree.currentNodeId || null,
+      }));
+
+      // Sync individual node states (only sync nodes that are unlocked or completed to reduce DB writes)
+      for (const node of data.progressTree.nodes) {
+        // Only sync nodes that have been unlocked (not locked)
+        if (node.status !== 'locked') {
+          promises.push(db.updateProgressNode(userId, node.id, {
+            unlocked: true,
+            completed: node.status === 'completed' || node.status === 'perfect',
+          }).catch((err) => {
+            // Log but don't fail entire sync if one node fails
+            console.error(`Error syncing progress node ${node.id}:`, err);
+          }));
+        }
+      }
+    }
+
+    // Sync daily session
+    if (data.dailySession) {
+      const sessionDate = new Date(data.dailySession.date).toISOString().split('T')[0];
+      promises.push(db.updateDailySession(userId, sessionDate, {
+        total_xp: data.dailySession.totalXp,
+        completed: data.dailySession.completed,
+        challenges_completed: data.dailySession.challenges.length,
+      }));
+    }
+
+    // Sync wind down session
+    if (data.windDownSession && data.windDownSession.completed) {
+      promises.push(db.saveWindDownSession(userId, {
+        duration: data.windDownSession.duration,
+        exercises_completed: data.windDownSession.breathingExercises > 0 ? ['breathing'] : [],
+      }));
+    }
+
+    // Sync wind down settings
+    if (data.windDownSettings) {
+      promises.push(db.updateWindDownSettings(userId, {
+        preferred_duration: data.windDownSettings.duration,
+        preferred_exercises: data.windDownSettings.breathingPattern ? [data.windDownSettings.breathingPattern] : [],
+        reminder_enabled: data.windDownSettings.enabled,
+      }));
+    }
+
+    // Sync deep analytics
+    if (data.deepAnalytics) {
+      promises.push(db.updateDeepAnalytics(userId, {
+        weekly_summary: {
+          attentionScore: data.deepAnalytics.attentionScore,
+          impulseControlScore: data.deepAnalytics.impulseControlScore,
+          distractionResistanceScore: data.deepAnalytics.distractionResistanceScore,
+          weeklyProgress: data.deepAnalytics.weeklyProgress,
+        },
+        monthly_trends: {
+          monthlyProgress: data.deepAnalytics.monthlyProgress,
+        },
+        skill_breakdown: {
+          focus: data.deepAnalytics.attentionScore,
+          impulseControl: data.deepAnalytics.impulseControlScore,
+          distractionResistance: data.deepAnalytics.distractionResistanceScore,
+        },
+        improvement_rate: 0, // Can be calculated from trends
+      }));
+    }
+
+    // Sync training plan
+    if (data.trainingPlan) {
+      promises.push(db.saveTrainingPlan(userId, {
+        plan_type: 'personalized',
+        exercises: data.trainingPlan.recommendations.map(r => r.challengeType),
+        is_active: true,
+      }));
     }
 
     await Promise.all(promises);
@@ -121,6 +271,7 @@ async function syncToSupabase(userId: string, session: any, data: {
     // Don't throw - local storage is the source of truth
   }
 }
+
 
 interface GameContextType {
   progress: GameProgress | null;
@@ -337,6 +488,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       skillTree: newSkillTree,
       stats: newStats,
       heartState: newHeartState,
+    }).catch((error) => {
+      console.error('Failed to sync initial progress to Supabase:', error);
     });
   };
 
@@ -617,30 +770,27 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
     await saveToStorage(STORAGE_KEYS.DAILY_SESSIONS, allSessions);
 
+    // Save all state to storage first
+    await Promise.all([
+      saveToStorage(STORAGE_KEYS.GAME_PROGRESS, updatedProgress),
+      saveToStorage(STORAGE_KEYS.SKILL_TREE, updatedSkillTree),
+      saveToStorage(STORAGE_KEYS.USER_STATS, updatedStats),
+      saveToStorage(STORAGE_KEYS.PROGRESS_TREE, updatedProgressTree),
+    ]);
+
+    // Update state after successful save
     setProgress(updatedProgress);
     setTodaySession(session);
     setSkillTree(updatedSkillTree);
     setStats(updatedStats);
     setProgressTree(updatedProgressTree);
 
-    await saveToStorage(STORAGE_KEYS.GAME_PROGRESS, updatedProgress);
-    await saveToStorage(STORAGE_KEYS.SKILL_TREE, updatedSkillTree);
-    await saveToStorage(STORAGE_KEYS.USER_STATS, updatedStats);
-    await saveToStorage(STORAGE_KEYS.PROGRESS_TREE, updatedProgressTree);
-
-    // Sync to Supabase
-    syncToSupabase(user.id, session, {
-      progress: updatedProgress,
-      skillTree: updatedSkillTree,
-      stats: updatedStats,
-      challengeResult: result,
-    });
-
     // Check for newly unlocked badges
+    let updatedBadgeProgress = badgeProgress;
     if (badgeProgress) {
       const newBadges = checkAllBadges(badgeProgress, updatedProgress, updatedSkillTree, allResults, heartState);
       if (newBadges.length > 0) {
-        const updatedBadgeProgress = {
+        updatedBadgeProgress = {
           ...badgeProgress,
           unlockedBadges: [...badgeProgress.unlockedBadges, ...newBadges],
         };
@@ -649,6 +799,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setNewlyUnlockedBadges(newBadges);
       }
     }
+
+    // Sync to Supabase (fire and forget - don't block on sync)
+    syncToSupabase(user.id, session, {
+      progress: updatedProgress,
+      skillTree: updatedSkillTree,
+      stats: updatedStats,
+      challengeResult: result,
+      badgeProgress: updatedBadgeProgress || undefined,
+      progressTree: updatedProgressTree,
+      dailySession: session,
+    }).catch((error) => {
+      console.error('Failed to sync to Supabase:', error);
+      // Don't throw - allow the challenge completion to proceed even if sync fails
+    });
   };
 
   const completeSession = async () => {
@@ -719,17 +883,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // Sync to Supabase
     syncToSupabase(user.id, session, {
       progress: updatedProgress,
+      dailySession: completedSession,
+    }).catch((error) => {
+      console.error('Failed to sync session completion to Supabase:', error);
     });
-
-    // Also update daily session in Supabase
-    if (session) {
-      const today = new Date().toISOString().split('T')[0];
-      db.updateDailySession(user.id, today, {
-        total_xp: completedSession.totalXp,
-        completed: true,
-        challenges_completed: completedSession.challenges.length,
-      });
-    }
   };
 
   // Heart System Methods
@@ -753,9 +910,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
 
     // Sync to Supabase
-    syncToSupabase(user.id, session, { heartState: updatedHeartState });
+    syncToSupabase(user.id, session, { heartState: updatedHeartState }).catch((error) => {
+      console.error('Failed to sync heart loss to Supabase:', error);
+    });
     if (session && transaction) {
-      db.logHeartTransaction(user.id, transaction.change, transaction.reason);
+      db.logHeartTransaction(user.id, transaction.change, transaction.reason).catch((error) => {
+        console.error('Failed to log heart transaction:', error);
+      });
     }
 
     return canContinue;
@@ -776,9 +937,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
 
     // Sync to Supabase
-    syncToSupabase(user.id, session, { heartState: updatedHeartState });
+    syncToSupabase(user.id, session, { heartState: updatedHeartState }).catch((error) => {
+      console.error('Failed to sync heart gain to Supabase:', error);
+    });
     if (session && transaction) {
-      db.logHeartTransaction(user.id, transaction.change, transaction.reason);
+      db.logHeartTransaction(user.id, transaction.change, transaction.reason).catch((error) => {
+        console.error('Failed to log heart transaction:', error);
+      });
     }
   };
 
@@ -807,13 +972,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
   };
 
   const setCurrentNodeId = async (nodeId: string): Promise<void> => {
-    if (!progressTree) return;
+    if (!progressTree || !user) return;
 
     const updatedProgressTree = { ...progressTree };
     updatedProgressTree.currentNodeId = nodeId;
     
     setProgressTree(updatedProgressTree);
     await saveToStorage(STORAGE_KEYS.PROGRESS_TREE, updatedProgressTree);
+
+    // Sync to Supabase
+    syncToSupabase(user.id, session, {
+      progressTree: updatedProgressTree,
+    }).catch((error) => {
+      console.error('Failed to sync progress tree update to Supabase:', error);
+    });
   };
 
   // Show loading state while initializing

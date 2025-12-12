@@ -141,8 +141,8 @@ export function WindDownMode({ onBack }: WindDownModeProps) {
     setIsActive(true);
   };
 
-  const completeSession = () => {
-    if (!currentSession) return;
+  const completeSession = async () => {
+    if (!currentSession || !user) return;
 
     const completedSession: WindDownSession = {
       ...currentSession,
@@ -154,7 +154,18 @@ export function WindDownMode({ onBack }: WindDownModeProps) {
 
     const allSessions = loadFromStorage<WindDownSession[]>(STORAGE_KEYS.WIND_DOWN_SESSIONS) || [];
     allSessions.push(completedSession);
-    saveToStorage(STORAGE_KEYS.WIND_DOWN_SESSIONS, allSessions);
+    await saveToStorage(STORAGE_KEYS.WIND_DOWN_SESSIONS, allSessions);
+
+    // Sync to Supabase
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      db.saveWindDownSession(user.id, {
+        duration: sessionTime,
+        exercises_completed: breathCount > 0 ? ['breathing'] : [],
+      }).catch((error) => {
+        console.error('Failed to sync wind down session to Supabase:', error);
+      });
+    }
 
     setCurrentSession(null);
     setIsActive(false);
@@ -162,12 +173,22 @@ export function WindDownMode({ onBack }: WindDownModeProps) {
     setSessionTime(0);
   };
 
-  const changePattern = (pattern: 'box' | 'relaxing' | 'sleep') => {
+  const changePattern = async (pattern: 'box' | 'relaxing' | 'sleep') => {
     if (!user || !settings) return;
 
     const newSettings = { ...settings, breathingPattern: pattern };
     setSettings(newSettings);
-    saveToStorage(STORAGE_KEYS.WIND_DOWN_SETTINGS, newSettings);
+    await saveToStorage(STORAGE_KEYS.WIND_DOWN_SETTINGS, newSettings);
+
+    // Sync to Supabase
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      db.updateWindDownSettings(user.id, {
+        preferred_exercises: [pattern],
+      }).catch((error) => {
+        console.error('Failed to sync wind down settings to Supabase:', error);
+      });
+    }
 
     if (isActive) {
       setIsActive(false);

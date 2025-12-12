@@ -27,7 +27,11 @@
       "Bash(grep:*)",
       "Bash(find:*)",
       "Bash(cat:*)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nFix Cloudflare Pages deployment configuration\n\n- Changed build script to use @cloudflare/next-on-pages adapter\n- Updated deploy command to use npx wrangler for proper PATH resolution\n- Configured for Cloudflare Pages edge runtime deployment\n\nThis ensures the Next.js app builds correctly for Cloudflare''s edge network.\n\n🤖 Generated with Claude Code (https://claude.com/claude-code)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nFix Cloudflare Pages deployment configuration\n\n- Changed build script to use @cloudflare/next-on-pages adapter  \n- Updated deploy command to use npx wrangler for proper PATH resolution\n- Configured for Cloudflare Pages edge runtime deployment\n\nThis ensures the Next.js app builds correctly for Cloudflare''s edge network.\n\n🤖 Generated with Claude Code (https://claude.com/claude-code)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []

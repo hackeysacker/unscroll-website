@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { faDiscord } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -8,8 +9,19 @@ import {
 	Sparkles,
 	Zap,
 } from "lucide-react";
+import { ContactForm } from "./ContactForm";
+import { Button } from "./ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "./ui/dialog";
 
 export function HomepagePlaceholder() {
+	const [showContactForm, setShowContactForm] = useState(false);
+
 	return (
 		<div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-black dark:to-gray-800 flex items-center justify-center p-4">
 			{/* Fancy animated background elements */}
@@ -100,18 +112,35 @@ export function HomepagePlaceholder() {
 									/>
 									<span>Discord Community</span>
 								</a>
-								<a
-									href="mailto:support@creao.ai"
+								<Button
+									onClick={() => setShowContactForm(true)}
 									className="group flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-gray-700 to-gray-900 hover:from-gray-800 hover:to-black text-white font-semibold rounded-xl shadow-lg hover:shadow-gray-800/25 transition-all duration-300 hover:scale-105 hover:-translate-y-0.5"
 								>
 									<Mail className="h-5 w-5 group-hover:bounce" />
-									<span>support@creao.ai</span>
-								</a>
+									<span>Contact Support</span>
+								</Button>
 							</div>
 						</div>
 					</div>
 				</div>
 			</div>
+
+			{/* Contact Form Dialog */}
+			<Dialog open={showContactForm} onOpenChange={setShowContactForm}>
+				<DialogContent className="max-w-md">
+					<DialogHeader>
+						<DialogTitle>Contact Support</DialogTitle>
+						<DialogDescription>
+							Send us a message and we'll get back to you as soon as possible.
+						</DialogDescription>
+					</DialogHeader>
+					<ContactForm
+						onSuccess={() => {
+							setTimeout(() => setShowContactForm(false), 2000);
+						}}
+					/>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }

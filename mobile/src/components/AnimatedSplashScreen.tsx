@@ -1,8 +1,14 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Circle, Rect, Line, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 
 const { width, height } = Dimensions.get('window');
+
+const AnimatedSvg = Animated.createAnimatedComponent(Svg);
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const AnimatedRect = Animated.createAnimatedComponent(Rect);
+const AnimatedLine = Animated.createAnimatedComponent(Line);
 
 interface AnimatedSplashScreenProps {
   onFinish: () => void;
@@ -10,34 +16,27 @@ interface AnimatedSplashScreenProps {
 
 export function AnimatedSplashScreen({ onFinish }: AnimatedSplashScreenProps) {
   // Animation values
-  const phoneScale = useRef(new Animated.Value(0.3)).current;
+  const outerCircleScale = useRef(new Animated.Value(0)).current;
   const phoneOpacity = useRef(new Animated.Value(0)).current;
-  const circleScale = useRef(new Animated.Value(0)).current;
-  const circleOpacity = useRef(new Animated.Value(0)).current;
-  const xMarkScale = useRef(new Animated.Value(0)).current;
-  const xMarkRotation = useRef(new Animated.Value(0)).current;
-  const outerCircleScale = useRef(new Animated.Value(0.8)).current;
-  const outerCircleOpacity = useRef(new Animated.Value(0)).current;
+  const phoneScale = useRef(new Animated.Value(0.3)).current;
+  const innerCircleScale = useRef(new Animated.Value(0)).current;
+  const xMarkOpacity = useRef(new Animated.Value(0)).current;
+  const xMarkScale = useRef(new Animated.Value(0.3)).current;
+  const logoScale = useRef(new Animated.Value(1)).current;
+  const logoOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    // Sequence of animations
+    // Sequence of animations - build up the logo
     Animated.sequence([
-      // Step 1: Fade in outer circle (0-400ms)
-      Animated.parallel([
-        Animated.timing(outerCircleOpacity, {
-          toValue: 1,
-          duration: 400,
-          useNativeDriver: true,
-        }),
-        Animated.spring(outerCircleScale, {
-          toValue: 1,
-          friction: 8,
-          tension: 40,
-          useNativeDriver: true,
-        }),
-      ]),
+      // Step 1: Outer circle appears with spring (0-500ms)
+      Animated.spring(outerCircleScale, {
+        toValue: 1,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      }),
 
-      // Step 2: Phone appears and scales up (400-800ms)
+      // Step 2: Phone appears (500-800ms)
       Animated.parallel([
         Animated.timing(phoneOpacity, {
           toValue: 1,
@@ -53,65 +52,55 @@ export function AnimatedSplashScreen({ onFinish }: AnimatedSplashScreenProps) {
       ]),
 
       // Step 3: Inner circle appears (800-1100ms)
+      Animated.spring(innerCircleScale, {
+        toValue: 1,
+        friction: 6,
+        tension: 50,
+        useNativeDriver: true,
+      }),
+
+      // Step 4: X mark appears with bounce (1100-1500ms)
       Animated.parallel([
-        Animated.timing(circleOpacity, {
+        Animated.timing(xMarkOpacity, {
           toValue: 1,
           duration: 200,
           useNativeDriver: true,
         }),
-        Animated.spring(circleScale, {
-          toValue: 1,
-          friction: 6,
-          tension: 50,
-          useNativeDriver: true,
-        }),
-      ]),
-
-      // Step 4: X mark appears with rotation (1100-1500ms)
-      Animated.parallel([
         Animated.spring(xMarkScale, {
           toValue: 1,
           friction: 5,
           tension: 60,
           useNativeDriver: true,
         }),
-        Animated.timing(xMarkRotation, {
+      ]),
+
+      // Step 5: Hold the complete logo (1500-2300ms)
+      Animated.delay(800),
+
+      // Step 6: Subtle pulse before finishing (2300-2700ms)
+      Animated.sequence([
+        Animated.timing(logoScale, {
+          toValue: 1.05,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(logoScale, {
           toValue: 1,
-          duration: 400,
+          duration: 200,
           useNativeDriver: true,
         }),
       ]),
 
-      // Step 5: Hold for a moment (1500-2200ms)
-      Animated.delay(700),
-
-      // Step 6: Fade out everything (2200-2600ms)
-      Animated.parallel([
-        Animated.timing(phoneOpacity, {
-          toValue: 0,
-          duration: 400,
-          useNativeDriver: true,
-        }),
-        Animated.timing(circleOpacity, {
-          toValue: 0,
-          duration: 400,
-          useNativeDriver: true,
-        }),
-        Animated.timing(outerCircleOpacity, {
-          toValue: 0,
-          duration: 400,
-          useNativeDriver: true,
-        }),
-      ]),
+      // Step 7: Fade out to reveal app (2700-3100ms)
+      Animated.timing(logoOpacity, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }),
     ]).start(() => {
       onFinish();
     });
   }, []);
-
-  const rotateInterpolation = xMarkRotation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '90deg'],
-  });
 
   return (
     <View style={styles.container}>
@@ -119,72 +108,119 @@ export function AnimatedSplashScreen({ onFinish }: AnimatedSplashScreenProps) {
         colors={['#030712', '#0f172a', '#1e293b']}
         style={styles.gradient}
       >
-        <View style={styles.logoContainer}>
-          {/* Outer Circle */}
-          <Animated.View
-            style={[
-              styles.outerCircle,
-              {
-                opacity: outerCircleOpacity,
-                transform: [{ scale: outerCircleScale }],
-              },
-            ]}
-          />
+        <Animated.View
+          style={[
+            styles.logoContainer,
+            {
+              opacity: logoOpacity,
+              transform: [{ scale: logoScale }],
+            },
+          ]}
+        >
+          <AnimatedSvg width="280" height="280" viewBox="0 0 100 100">
+            <Defs>
+              {/* Gradient 1: Outer circle */}
+              <SvgLinearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <Stop offset="0%" stopColor="#6366f1" stopOpacity="1" />
+                <Stop offset="100%" stopColor="#f59e0b" stopOpacity="1" />
+              </SvgLinearGradient>
 
-          {/* Phone Container */}
-          <Animated.View
-            style={[
-              styles.phoneContainer,
-              {
-                opacity: phoneOpacity,
-                transform: [{ scale: phoneScale }],
-              },
-            ]}
-          >
-            {/* Phone Outline */}
-            <View style={styles.phone}>
-              {/* Phone Notch */}
-              <View style={styles.notch} />
+              {/* Gradient 2: Phone outline */}
+              <SvgLinearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                <Stop offset="0%" stopColor="#6366f1" stopOpacity="1" />
+                <Stop offset="100%" stopColor="#8b5cf6" stopOpacity="1" />
+              </SvgLinearGradient>
 
-              {/* Phone Screen */}
-              <View style={styles.screen}>
-                {/* Inner Circle Background */}
-                <Animated.View
-                  style={[
-                    styles.innerCircleContainer,
-                    {
-                      opacity: circleOpacity,
-                      transform: [{ scale: circleScale }],
-                    },
-                  ]}
-                >
-                  <View style={styles.innerCircle} />
-                </Animated.View>
+              {/* Gradient 3: Inner circle */}
+              <SvgLinearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+                <Stop offset="0%" stopColor="#8b5cf6" stopOpacity="1" />
+                <Stop offset="100%" stopColor="#f59e0b" stopOpacity="1" />
+              </SvgLinearGradient>
+            </Defs>
 
-                {/* X Mark */}
-                <Animated.View
-                  style={[
-                    styles.xMarkContainer,
-                    {
-                      transform: [
-                        { scale: xMarkScale },
-                        { rotate: rotateInterpolation },
-                      ],
-                    },
-                  ]}
-                >
-                  <View style={styles.xMark}>
-                    <View style={[styles.xBar, styles.xBar1]} />
-                    <View style={[styles.xBar, styles.xBar2]} />
-                  </View>
-                </Animated.View>
-              </View>
+            {/* Outer circle */}
+            <AnimatedCircle
+              cx="50"
+              cy="50"
+              r="45"
+              stroke="url(#gradient1)"
+              strokeWidth="3"
+              fill="none"
+              opacity={outerCircleScale}
+              scale={outerCircleScale}
+              origin="50, 50"
+            />
 
-              {/* Phone Home Indicator */}
-              <View style={styles.homeIndicator} />
-            </View>
-          </Animated.View>
-        </View>
+            {/* Phone outline */}
+            <AnimatedRect
+              x="35"
+              y="25"
+              width="30"
+              height="50"
+              rx="3"
+              stroke="url(#gradient2)"
+              strokeWidth="2.5"
+              fill="none"
+              opacity={phoneOpacity}
+              scale={phoneScale}
+              origin="50, 50"
+            />
+
+            {/* Phone screen */}
+            <AnimatedRect
+              x="38"
+              y="30"
+              width="24"
+              height="35"
+              rx="1"
+              fill="rgba(99, 102, 241, 0.1)"
+              opacity={phoneOpacity}
+              scale={phoneScale}
+              origin="50, 50"
+            />
+
+            {/* Inner circle */}
+            <AnimatedCircle
+              cx="50"
+              cy="50"
+              r="15"
+              stroke="url(#gradient3)"
+              strokeWidth="2"
+              fill="none"
+              opacity={innerCircleScale}
+              scale={innerCircleScale}
+              origin="50, 50"
+            />
+
+            {/* X mark - line 1 */}
+            <AnimatedLine
+              x1="43"
+              y1="43"
+              x2="57"
+              y2="57"
+              stroke="#ef4444"
+              strokeWidth="3"
+              strokeLinecap="round"
+              opacity={xMarkOpacity}
+              scale={xMarkScale}
+              origin="50, 50"
+            />
+
+            {/* X mark - line 2 */}
+            <AnimatedLine
+              x1="57"
+              y1="43"
+              x2="43"
+              y2="57"
+              stroke="#ef4444"
+              strokeWidth="3"
+              strokeLinecap="round"
+              opacity={xMarkOpacity}
+              scale={xMarkScale}
+              origin="50, 50"
+            />
+          </AnimatedSvg>
+        </Animated.View>
       </LinearGradient>
     </View>
   );

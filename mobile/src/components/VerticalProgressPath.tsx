@@ -1140,6 +1140,40 @@ function CrownIcon({ size, color }: IconProps) {
   );
 }
 
+function ShieldIcon({ size, color }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      {/* Shield outline */}
+      <Path
+        d="M12 2L4 5V11C4 16 7 20 12 22C17 20 20 16 20 11V5L12 2Z"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      {/* Phone icon inside shield */}
+      <Rect
+        x="9.5"
+        y="8"
+        width="5"
+        height="8"
+        rx="1"
+        stroke={color}
+        strokeWidth="1.5"
+        fill="none"
+      />
+      {/* X mark over phone */}
+      <Path
+        d="M8.5 11L13.5 16M13.5 11L8.5 16"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
 function LockIcon({ size, color }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
@@ -1280,9 +1314,9 @@ function BottomNav({ activeTab, onTabPress, bottomInset }: BottomNavProps) {
   const tabs = [
     { id: 'home', label: 'Learn', IconComponent: HomeIcon },
     { id: 'practice', label: 'Practice', IconComponent: DumbbellIcon },
+    { id: 'shield', label: 'Shield', IconComponent: ShieldIcon },
     { id: 'leaderboard', label: 'Ranks', IconComponent: TrophyIcon },
     { id: 'profile', label: 'Profile', IconComponent: ProfileIcon },
-    { id: 'more', label: 'More', IconComponent: MenuIcon },
   ];
 
   return (
@@ -1998,14 +2032,19 @@ export function VerticalProgressPath({ onBack, onLevelSelect, onNavigate }: Vert
         activeTab={activeTab}
         onTabPress={(tab) => {
           setActiveTab(tab);
-          if (tab === 'practice') {
+          if (tab === 'home') {
+            // Already on home, do nothing or scroll to top
+            scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+          } else if (tab === 'practice') {
             onNavigate?.('practice');
+          } else if (tab === 'shield') {
+            onNavigate?.('focus-shield');
           } else if (tab === 'leaderboard') {
             onNavigate?.('leaderboard');
           } else if (tab === 'profile') {
             onNavigate?.('profile-screen');
-          } else if (tab === 'more') {
-            onBack(); // Navigate back/to menu
+          } else if (tab === 'premium') {
+            onNavigate?.('premium');
           }
         }}
         bottomInset={insets.bottom}

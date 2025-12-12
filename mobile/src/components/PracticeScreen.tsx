@@ -186,11 +186,11 @@ interface PracticeOption {
   xp: number;
   duration: string;
   activities: ActivityType[];
-  minLevel: number;
   category: 'quick' | 'challenge' | 'focus';
+  difficulty: 'easy' | 'medium' | 'hard' | 'extreme';
 }
 
-const PRACTICE_OPTIONS: PracticeOption[] = [
+export const PRACTICE_OPTIONS: PracticeOption[] = [
   {
     id: 'quick-practice',
     title: 'Quick Practice',
@@ -200,8 +200,8 @@ const PRACTICE_OPTIONS: PracticeOption[] = [
     xp: 15,
     duration: '2-3 min',
     activities: ['gaze_hold', 'breath_pacing', 'tap_pattern'],
-    minLevel: 1,
     category: 'quick',
+    difficulty: 'easy',
   },
   {
     id: 'focus-training',
@@ -212,8 +212,8 @@ const PRACTICE_OPTIONS: PracticeOption[] = [
     xp: 20,
     duration: '5 min',
     activities: ['gaze_hold', 'stillness_test', 'focus_hold'],
-    minLevel: 1,
     category: 'focus',
+    difficulty: 'easy',
   },
   {
     id: 'breathing',
@@ -224,8 +224,8 @@ const PRACTICE_OPTIONS: PracticeOption[] = [
     xp: 10,
     duration: '3-5 min',
     activities: ['breath_pacing', 'controlled_breathing', 'box_breathing'],
-    minLevel: 1,
     category: 'focus',
+    difficulty: 'easy',
   },
   {
     id: 'weak-skills',
@@ -236,8 +236,8 @@ const PRACTICE_OPTIONS: PracticeOption[] = [
     xp: 20,
     duration: '5 min',
     activities: ['reaction_inhibition', 'impulse_spike_test', 'popup_ignore'],
-    minLevel: 5,
     category: 'challenge',
+    difficulty: 'medium',
   },
   {
     id: 'timed-challenge',
@@ -248,8 +248,8 @@ const PRACTICE_OPTIONS: PracticeOption[] = [
     xp: 25,
     duration: '3 min',
     activities: ['multi_task_tap', 'tap_pattern', 'memory_flash'],
-    minLevel: 10,
     category: 'challenge',
+    difficulty: 'hard',
   },
   {
     id: 'perfect-run',
@@ -260,8 +260,8 @@ const PRACTICE_OPTIONS: PracticeOption[] = [
     xp: 30,
     duration: '5 min',
     activities: ['impulse_spike_test', 'reaction_inhibition', 'stillness_test'],
-    minLevel: 15,
     category: 'challenge',
+    difficulty: 'hard',
   },
   {
     id: 'memory-boost',
@@ -272,8 +272,8 @@ const PRACTICE_OPTIONS: PracticeOption[] = [
     xp: 20,
     duration: '4 min',
     activities: ['memory_flash', 'multi_object_tracking', 'tap_pattern'],
-    minLevel: 8,
     category: 'focus',
+    difficulty: 'medium',
   },
   {
     id: 'endurance',
@@ -284,8 +284,8 @@ const PRACTICE_OPTIONS: PracticeOption[] = [
     xp: 50,
     duration: '10+ min',
     activities: ['gaze_hold', 'breath_pacing', 'stillness_test', 'finger_tracing', 'tap_pattern'],
-    minLevel: 20,
     category: 'challenge',
+    difficulty: 'extreme',
   },
 ];
 
@@ -302,10 +302,6 @@ export function PracticeScreen({ onBack, onSelectPractice }: PracticeScreenProps
   );
 
   const handlePracticeSelect = (option: PracticeOption) => {
-    if (currentLevel < option.minLevel) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      return;
-    }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onSelectPractice(option.id);
   };
@@ -426,41 +422,50 @@ export function PracticeScreen({ onBack, onSelectPractice }: PracticeScreenProps
 
         {filteredOptions.map((option) => {
           const IconComponent = option.IconComponent;
-          const isLocked = currentLevel < option.minLevel;
+          const difficultyColors = {
+            easy: '#10B981',
+            medium: '#F59E0B',
+            hard: '#EF4444',
+            extreme: '#8B5CF6',
+          };
+          const difficultyLabels = {
+            easy: 'Easy',
+            medium: 'Medium',
+            hard: 'Hard',
+            extreme: 'Extreme',
+          };
+          const difficultyColor = difficultyColors[option.difficulty];
+          const difficultyLabel = difficultyLabels[option.difficulty];
 
           return (
             <TouchableOpacity
               key={option.id}
               onPress={() => handlePracticeSelect(option)}
-              activeOpacity={isLocked ? 1 : 0.8}
+              activeOpacity={0.8}
             >
               <LinearGradient
-                colors={isLocked ? ['#4B5563', '#374151'] : option.color}
+                colors={option.color}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={[styles.practiceCard, isLocked && styles.practiceCardLocked]}
+                style={styles.practiceCard}
               >
                 <View style={styles.practiceIcon}>
-                  {isLocked ? (
-                    <LockIcon size={32} color="rgba(255, 255, 255, 0.5)" />
-                  ) : (
-                    <IconComponent size={32} color="#FFFFFF" />
-                  )}
+                  <IconComponent size={32} color="#FFFFFF" />
                 </View>
 
                 <View style={styles.practiceInfo}>
                   <View style={styles.practiceHeader}>
-                    <Text style={[styles.practiceTitle, isLocked && styles.practiceTextLocked]}>
+                    <Text style={styles.practiceTitle}>
                       {option.title}
                     </Text>
-                    {isLocked && (
-                      <View style={styles.lockedBadge}>
-                        <Text style={styles.lockedBadgeText}>Lvl {option.minLevel}</Text>
-                      </View>
-                    )}
+                    <View style={[styles.difficultyBadge, { backgroundColor: difficultyColor + '30', borderColor: difficultyColor }]}>
+                      <Text style={[styles.difficultyBadgeText, { color: difficultyColor }]}>
+                        {difficultyLabel}
+                      </Text>
+                    </View>
                   </View>
-                  <Text style={[styles.practiceDescription, isLocked && styles.practiceTextLocked]}>
-                    {isLocked ? `Unlock at level ${option.minLevel}` : option.description}
+                  <Text style={styles.practiceDescription}>
+                    {option.description}
                   </Text>
 
                   <View style={styles.practiceFooter}>
@@ -474,7 +479,7 @@ export function PracticeScreen({ onBack, onSelectPractice }: PracticeScreenProps
                   </View>
                 </View>
 
-                <Text style={[styles.chevron, isLocked && styles.practiceTextLocked]}>›</Text>
+                <Text style={styles.chevron}>›</Text>
               </LinearGradient>
             </TouchableOpacity>
           );
@@ -680,9 +685,6 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  practiceCardLocked: {
-    opacity: 0.7,
-  },
   practiceIcon: {
     width: 56,
     height: 56,
@@ -698,27 +700,25 @@ const styles = StyleSheet.create({
   practiceHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'space-between',
     marginBottom: 4,
   },
   practiceTitle: {
     fontSize: 17,
     fontWeight: '700',
     color: '#FFFFFF',
+    flex: 1,
   },
-  practiceTextLocked: {
-    color: 'rgba(255, 255, 255, 0.5)',
+  difficultyBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    borderWidth: 1.5,
   },
-  lockedBadge: {
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  lockedBadgeText: {
+  difficultyBadgeText: {
     fontSize: 11,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   practiceDescription: {
     fontSize: 13,

@@ -1,142 +1,103 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Header } from '@/components/ui/Header';
 
 interface PremiumProps {
   onBack: () => void;
 }
 
 const features = [
-  {
-    emoji: '❤️',
-    title: 'Unlimited Hearts',
-    description: 'Train anytime, without limits. Never run out of hearts and maintain your focus momentum.',
-    highlighted: true,
-  },
-  {
-    emoji: '🧠',
-    title: 'Personalized Training Plan',
-    description: 'AI-powered coach that adapts to your performance, weaknesses, and goals',
-  },
-  {
-    emoji: '📊',
-    title: 'Deep Analytics',
-    description: 'Attention score, impulse control charts, and weekly/monthly progress visuals',
-  },
-  {
-    emoji: '🌙',
-    title: 'Wind-Down Mode',
-    description: 'Guided breathing exercises for sleep and relaxation',
-  },
-  {
-    emoji: '🎨',
-    title: 'Custom Aesthetic Themes',
-    description: 'Unlock 4 beautiful themes: minimal light, deep calm dark, vintage ink, and clean white studio',
-  },
-  {
-    emoji: '✨',
-    title: 'Premium Features',
-    description: 'Access all current and future premium features',
-  },
+  { emoji: '❤️', title: 'Unlimited Hearts', description: 'Train anytime without limits' },
+  { emoji: '🧠', title: 'Personalized Training', description: 'AI-powered adaptive coaching' },
+  { emoji: '📊', title: 'Deep Analytics', description: 'Track your progress in detail' },
+  { emoji: '🌙', title: 'Wind-Down Mode', description: 'Guided breathing exercises' },
+  { emoji: '✨', title: 'All Premium Features', description: 'Unlock everything, now and future' },
 ];
 
 export function Premium({ onBack }: PremiumProps) {
   const { user, upgradeToPremium } = useAuth();
-  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   if (!user) return null;
 
   const handleUpgrade = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     await upgradeToPremium();
     Alert.alert('Success', 'Premium upgrade successful! (Demo mode - no payment processed)');
     onBack();
   };
 
-  if (user.isPremium) {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Header title="Premium" onBack={onBack} />
-        <ScrollView style={[styles.scrollView, { backgroundColor: colors.background }]} contentContainerStyle={styles.contentContainer}>
-          <Card style={styles.premiumCard}>
-          <View style={styles.premiumHeader}>
-            <Text style={styles.premiumCrown}>👑</Text>
-            <Text style={styles.premiumTitle}>You're a Premium Member!</Text>
-            <Text style={styles.premiumSubtitle}>Enjoying all premium features</Text>
-          </View>
-
-          <View style={styles.featuresList}>
-            {features.map((feature) => (
-              <View key={feature.title} style={styles.featureRow}>
-                <Text style={styles.checkmark}>✓</Text>
-                <View style={styles.featureContent}>
-                  <Text style={styles.featureTitle}>{feature.title}</Text>
-                  <Text style={styles.featureDescription}>{feature.description}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        </Card>
-        </ScrollView>
-      </View>
-    );
-  }
-
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title="Premium" onBack={onBack} />
-      <ScrollView style={[styles.scrollView, { backgroundColor: colors.background }]} contentContainerStyle={styles.contentContainer}>
+    <View style={[styles.container, { paddingTop: Math.max(insets.top, 12) }]}>
+      <LinearGradient
+        colors={['#0F172A', '#1E293B', '#334155']}
+        style={StyleSheet.absoluteFill}
+      />
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onBack();
+          }}
+          style={styles.backButton}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.backIcon}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Premium</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.iconContainer}>
-            <Text style={styles.iconEmoji}>👑</Text>
+        <View style={styles.headerSection}>
+          <Text style={styles.crownEmoji}>👑</Text>
+          <Text style={styles.title}>Premium</Text>
+          <Text style={styles.subtitle}>Unlock unlimited training and advanced features</Text>
+        </View>
+
+        {/* Pricing */}
+        <View style={styles.pricingCard}>
+          <View style={styles.priceRow}>
+            <Text style={styles.price}>$9.99</Text>
+            <Text style={styles.priceUnit}>/month</Text>
           </View>
-          <Text style={styles.title}>Upgrade to Premium</Text>
-          <Text style={styles.subtitle}>
-            Unlock advanced features and accelerate your focus training
-          </Text>
+          <Text style={styles.trialText}>Try free for 7 days</Text>
         </View>
 
-      {/* Pricing Card */}
-      <Card style={styles.pricingCard}>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>Limited Time Offer</Text>
-        </View>
-        <Text style={styles.price}>$9.99/month</Text>
-        <Text style={styles.priceSubtext}>or $99/year (save 17%)</Text>
-
+        {/* Features */}
         <View style={styles.featuresList}>
-          {features.map((feature) => {
-            const isHighlighted = feature.highlighted;
-            return (
-              <View
-                key={feature.title}
-                style={[
-                  styles.featureRow,
-                  isHighlighted && styles.featureRowHighlighted,
-                ]}
-              >
-                <Text style={styles.featureEmoji}>{feature.emoji}</Text>
-                <View style={styles.featureContent}>
-                  <Text style={styles.featureTitle}>{feature.title}</Text>
-                  <Text style={styles.featureDescription}>{feature.description}</Text>
-                </View>
+          {features.map((feature) => (
+            <View key={feature.title} style={styles.featureRow}>
+              <Text style={styles.featureEmoji}>{feature.emoji}</Text>
+              <View style={styles.featureContent}>
+                <Text style={styles.featureTitle}>{feature.title}</Text>
+                <Text style={styles.featureDescription}>{feature.description}</Text>
               </View>
-            );
-          })}
+            </View>
+          ))}
         </View>
-      </Card>
 
-      {/* CTA */}
-      <Button onPress={handleUpgrade} size="lg" style={styles.upgradeButton}>
-        Upgrade Now
-      </Button>
+        {/* CTA Button */}
+        <TouchableOpacity
+          onPress={handleUpgrade}
+          style={styles.upgradeButton}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.upgradeButtonText}>Start Free Trial</Text>
+        </TouchableOpacity>
 
-      <Text style={styles.footerText}>
-        Cancel anytime • 7-day free trial
-      </Text>
+        <Text style={styles.footerText}>Cancel anytime</Text>
+
+        <View style={{ height: Math.max(insets.bottom, 40) }} />
       </ScrollView>
     </View>
   );
@@ -145,92 +106,101 @@ export function Premium({ onBack }: PremiumProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#030712',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    zIndex: 10,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  backIcon: {
+    fontSize: 24,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  headerSpacer: {
+    width: 40,
   },
   scrollView: {
     flex: 1,
   },
   contentContainer: {
-    padding: 16,
-    paddingBottom: 32,
+    padding: 24,
   },
-  header: {
+  headerSection: {
     alignItems: 'center',
     marginBottom: 32,
+    marginTop: 16,
   },
-  iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#f59e0b',
-    alignItems: 'center',
-    justifyContent: 'center',
+  crownEmoji: {
+    fontSize: 64,
     marginBottom: 16,
   },
-  iconEmoji: {
-    fontSize: 48,
-  },
   title: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#FFFFFF',
     marginBottom: 8,
-    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 18,
-    color: '#9ca3af',
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.7)',
     textAlign: 'center',
   },
   pricingCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
     padding: 24,
-    marginBottom: 24,
-    borderWidth: 2,
-    borderColor: '#f59e0b',
+    alignItems: 'center',
+    marginBottom: 32,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
-  badge: {
-    backgroundColor: '#f59e0b',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    alignSelf: 'center',
-    marginBottom: 16,
-  },
-  badgeText: {
-    color: '#000000',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  price: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    textAlign: 'center',
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
     marginBottom: 8,
   },
-  priceSubtext: {
-    fontSize: 16,
-    color: '#9ca3af',
-    textAlign: 'center',
-    marginBottom: 24,
+  price: {
+    fontSize: 42,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  priceUnit: {
+    fontSize: 18,
+    color: 'rgba(255, 255, 255, 0.6)',
+    marginLeft: 4,
+  },
+  trialText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.7)',
   },
   featuresList: {
-    gap: 16,
+    marginBottom: 32,
   },
   featureRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  featureRowHighlighted: {
-    backgroundColor: '#7f1d1d',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#991b1b',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   featureEmoji: {
-    fontSize: 24,
+    fontSize: 32,
+    marginRight: 16,
   },
   featureContent: {
     flex: 1,
@@ -238,48 +208,28 @@ const styles = StyleSheet.create({
   featureTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#ffffff',
+    color: '#FFFFFF',
     marginBottom: 4,
   },
   featureDescription: {
     fontSize: 14,
-    color: '#9ca3af',
+    color: 'rgba(255, 255, 255, 0.6)',
   },
   upgradeButton: {
-    width: '100%',
-    backgroundColor: '#f59e0b',
+    backgroundColor: '#F59E0B',
+    borderRadius: 12,
+    padding: 18,
+    alignItems: 'center',
     marginBottom: 16,
+  },
+  upgradeButtonText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#000000',
   },
   footerText: {
     fontSize: 12,
-    color: '#6b7280',
+    color: 'rgba(255, 255, 255, 0.5)',
     textAlign: 'center',
   },
-  premiumCard: {
-    padding: 24,
-  },
-  premiumHeader: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  premiumCrown: {
-    fontSize: 32,
-    marginBottom: 12,
-  },
-  premiumTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 4,
-  },
-  premiumSubtitle: {
-    fontSize: 16,
-    color: '#9ca3af',
-  },
-  checkmark: {
-    fontSize: 20,
-    color: '#10b981',
-    marginRight: 12,
-  },
 });
-
