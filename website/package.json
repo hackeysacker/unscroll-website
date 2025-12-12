@@ -1,0 +1,25 @@
+{
+  "name": "focus-website",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "pages:build": "npx @cloudflare/next-on-pages",
+    "preview": "npm run pages:build && npx wrangler pages dev .vercel/output/static",
+    "deploy": "npx wrangler pages deploy .vercel/output/static --project-name=unscroll-website"
+  },
+  "dependencies": {
+    "next": "^15.0.0",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "@cloudflare/next-on-pages": "^1.13.0",
+    "eslint": "^8",
+    "eslint-config-next": "^14.0.0",
+    "wrangler": "^3.0.0"
+  }
+}

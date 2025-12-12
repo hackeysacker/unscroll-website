@@ -1,0 +1,19 @@
+# Cloudflare Pages configuration
+name = "unscroll-website"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Pages configuration
+pages_build_output_dir = ".vercel/output/static"
+
+# Environment variables (add your own in Cloudflare dashboard)
+# [vars]
+# API_KEY = "your-api-key"
+
+
+
+
+
+
+
+
