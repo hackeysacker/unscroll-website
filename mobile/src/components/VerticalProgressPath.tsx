@@ -2168,10 +2168,10 @@ export function VerticalProgressPath({ onBack, onLevelSelect, onNavigate }: Vert
             scrollViewRef.current?.scrollTo({ y: 0, animated: true });
           } else if (tab === 'practice') {
             onNavigate?.('practice');
-          } else if (tab === 'leaderboard') {
-            onNavigate?.('leaderboard');
-          } else if (tab === 'profile') {
-            onNavigate?.('profile-screen');
+          } else if (tab === 'shield') {
+            onNavigate?.('focus-shield');
+          } else if (tab === 'premium') {
+            onNavigate?.('premium');
           }
         }}
       />

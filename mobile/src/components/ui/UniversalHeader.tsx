@@ -275,12 +275,30 @@ export function UniversalHeader({ hearts, streak, gems, onProfilePress, onBack, 
         </View>
       )}
 
-      {/* Right side - Hearts */}
-      <View style={styles.headerStat}>
-        <View style={styles.headerIconContainer}>
-          <AnimatedHeartIcon size={20} color="#FF4B4B" value={hearts} />
+      {/* Right side - Hearts and Profile */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View style={styles.headerStat}>
+          <View style={styles.headerIconContainer}>
+            <AnimatedHeartIcon size={20} color="#FF4B4B" value={hearts} />
+          </View>
+          <AnimatedValue value={hearts} />
         </View>
-        <AnimatedValue value={hearts} />
+
+        {/* Profile Button */}
+        {onProfilePress && (
+          <TouchableOpacity
+            onPress={onProfilePress}
+            style={styles.profileButton}
+            activeOpacity={0.7}
+          >
+            <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                fill="#6366F1"
+              />
+            </Svg>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -345,5 +363,15 @@ const styles = StyleSheet.create({
   backButtonText: {
     fontSize: 24,
     color: '#3C3C43',
+  },
+  profileButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(99, 102, 241, 0.2)',
   },
 });
