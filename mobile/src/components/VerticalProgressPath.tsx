@@ -34,6 +34,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGame } from '@/contexts/GameContext';
 import { FOCUS_REALMS, type FocusRealm, getRealmForLevel, interpolateColor } from '@/lib/focus-realm-themes';
 import type { ActivityType } from '@/lib/journey-levels';
+import { UniversalHeader } from './ui/UniversalHeader';
+import { UniversalFooter, type TabType } from './ui/UniversalFooter';
 
 // Simple accent colors for background orbs
 const ACCENT_COLORS = ['#8B5CF6', '#EC4899', '#06B6D4'];
@@ -1528,8 +1530,54 @@ function LevelNodeComponent({ node, onPress, showCharacter }: LevelNodeProps) {
       >
         {/* Character removed - cleaner design */}
 
-        {/* Glow effect for current node */}
-        {node.status === 'current' && (
+        {/* Enhanced glow effect - multiple layers for depth */}
+        {(node.status === 'current' || node.status === 'available') && (
+          <>
+            {/* Outer glow */}
+            <View
+              style={[
+                styles.nodeGlow,
+                {
+                  width: size + 30,
+                  height: size + 30,
+                  borderRadius: (size + 30) / 2,
+                  backgroundColor: colors.glow,
+                  opacity: node.status === 'current' ? 0.4 : 0.2,
+                },
+              ]}
+            />
+            {/* Inner glow */}
+            <View
+              style={[
+                styles.nodeGlow,
+                {
+                  width: size + 15,
+                  height: size + 15,
+                  borderRadius: (size + 15) / 2,
+                  backgroundColor: colors.glow,
+                  opacity: node.status === 'current' ? 0.5 : 0.25,
+                },
+              ]}
+            />
+          </>
+        )}
+        {/* Milestone glow - golden aura */}
+        {node.isMilestone && node.status !== 'locked' && (
+          <View
+            style={[
+              styles.nodeGlow,
+              {
+                width: size + 40,
+                height: size + 40,
+                borderRadius: (size + 40) / 2,
+                backgroundColor: 'rgba(255, 200, 0, 0.5)',
+                opacity: 0.6,
+              },
+            ]}
+          />
+        )}
+        {/* Completed nodes - subtle green glow */}
+        {node.status === 'completed' && !node.isMilestone && (
           <View
             style={[
               styles.nodeGlow,
@@ -1537,7 +1585,7 @@ function LevelNodeComponent({ node, onPress, showCharacter }: LevelNodeProps) {
                 width: size + 20,
                 height: size + 20,
                 borderRadius: (size + 20) / 2,
-                backgroundColor: colors.glow,
+                backgroundColor: 'rgba(88, 204, 2, 0.4)',
                 opacity: 0.3,
               },
             ]}
@@ -1556,17 +1604,17 @@ function LevelNodeComponent({ node, onPress, showCharacter }: LevelNodeProps) {
               height: size,
               borderRadius: size / 2,
               borderColor: colors.border,
-              borderWidth: 5,
+              borderWidth: node.status === 'current' ? 6 : node.isMilestone ? 5.5 : 5,
             },
             Platform.select({
               ios: {
                 shadowColor: colors.shadowColor,
-                shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: 0.35,
-                shadowRadius: 10,
+                shadowOffset: { width: 0, height: node.status === 'current' ? 8 : 6 },
+                shadowOpacity: node.status === 'locked' ? 0.15 : node.isMilestone ? 0.5 : 0.4,
+                shadowRadius: node.status === 'current' ? 14 : node.isMilestone ? 12 : 10,
               },
               android: {
-                elevation: 10,
+                elevation: node.status === 'current' ? 14 : node.isMilestone ? 12 : 10,
               },
             }),
           ]}
@@ -1665,7 +1713,7 @@ export function VerticalProgressPath({ onBack, onLevelSelect, onNavigate }: Vert
   const scrollViewRef = useRef<ScrollView>(null);
   const [hasScrolled, setHasScrolled] = useState(false);
   const [currentRealmIndex, setCurrentRealmIndex] = useState(Math.max(0, Math.ceil((progress?.level || 1) / 25) - 1));
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState<TabType>('home');
 
   // Opening animation - staggered node fade-in
   const [isAnimating, setIsAnimating] = useState(true);
@@ -1957,10 +2005,8 @@ export function VerticalProgressPath({ onBack, onLevelSelect, onNavigate }: Vert
       />
 
       {/* Duolingo-Style Header */}
-      <DuolingoHeader
-        topInset={Math.max(insets.top, 8)}
-        currentHearts={heartState?.currentHearts || 5}
-        maxHearts={heartState?.maxHearts || 5}
+      <UniversalHeader
+        hearts={heartState?.currentHearts || 5}
         streak={progress?.streak || 0}
         gems={progress?.xp || 0}
         onProfilePress={() => onNavigate?.('profile-screen')}
@@ -2060,26 +2106,22 @@ export function VerticalProgressPath({ onBack, onLevelSelect, onNavigate }: Vert
         </ScrollView>
 
       {/* Bottom Navigation Bar */}
-      <BottomNav
+      <UniversalFooter
         activeTab={activeTab}
-        onTabPress={(tab) => {
+        onTabChange={(tab) => {
           setActiveTab(tab);
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           if (tab === 'home') {
             // Already on home, do nothing or scroll to top
             scrollViewRef.current?.scrollTo({ y: 0, animated: true });
           } else if (tab === 'practice') {
             onNavigate?.('practice');
-          } else if (tab === 'shield') {
-            onNavigate?.('focus-shield');
           } else if (tab === 'leaderboard') {
             onNavigate?.('leaderboard');
           } else if (tab === 'profile') {
             onNavigate?.('profile-screen');
-          } else if (tab === 'premium') {
-            onNavigate?.('premium');
           }
         }}
-        bottomInset={insets.bottom}
       />
     </View>
   );
