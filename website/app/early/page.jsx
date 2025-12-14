@@ -35,9 +35,18 @@ export default function EarlyPage() {
         }),
       })
 
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('API Error:', response.status, errorData)
+        alert(`Error: ${errorData.error || 'Failed to join. Please try again.'}`)
+        setLoading(false)
+        return
+      }
+
       const data = await response.json()
 
       if (!data.ok) {
+        console.error('Response error:', data)
         alert(`Error: ${data.error || 'Failed to join. Please try again.'}`)
         setLoading(false)
         return
@@ -46,7 +55,8 @@ export default function EarlyPage() {
       setLoading(false)
       setSubmitted(true)
     } catch (error) {
-      alert('Network error. Please try again.')
+      console.error('Network error:', error)
+      alert(`Network error: ${error.message}. Please check your connection and try again.`)
       setLoading(false)
     }
   }
