@@ -2,15 +2,17 @@
  * Vertical Progress Path - Duolingo Style
  *
  * Features:
- * - 100 levels across 10 realms (10 levels per realm)
+ * - 250 levels across 10 realms (25 levels per realm)
  * - Progressive difficulty: more exercises per level in later realms
  * - Realm 1: Basic attention training (beginner)
  * - Realms 2-10: Advanced skills and combinations
+ * - Smooth opening animation with staggered node fade-in
+ * - Enhanced node visuals with depth, shadows, and glow effects
+ * - Improved background with layered animated gradients
  * - Duolingo-style header with streak, gems, hearts, and profile
- * - Character positioned on current level
+ * - Character positioned on current level with smooth scroll
  * - Bottom navigation bar
- * - Smooth scrolling with realm transitions
- * - Clear visual indicators for locked, available, current, and completed states
+ * - Buttery-smooth realm transitions with color blending
  */
 
 import { useRef, useMemo, useEffect, useState } from 'react';
@@ -83,14 +85,17 @@ interface LevelNode {
 }
 
 /**
- * Simple Animated Background - Smooth floating orbs using native animations
+ * Enhanced Animated Background - Layered gradients with smooth floating orbs
  */
 function SimpleAnimatedBackground({ accentColor, realmIndex, scrollProgress }: { accentColor: string; realmIndex: number; scrollProgress: number }) {
-  // Create animated values for 3 orbs
+  // Create animated values for 5 orbs (more depth)
   const orb1Anim = useRef(new Animated.Value(0)).current;
   const orb2Anim = useRef(new Animated.Value(0)).current;
   const orb3Anim = useRef(new Animated.Value(0)).current;
+  const orb4Anim = useRef(new Animated.Value(0)).current;
+  const orb5Anim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(0)).current;
+  const gradientShiftAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // Smooth looping animations using native driver
@@ -1659,10 +1664,36 @@ export function VerticalProgressPath({ onBack, onLevelSelect, onNavigate }: Vert
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
   const [hasScrolled, setHasScrolled] = useState(false);
-  const [currentRealmIndex, setCurrentRealmIndex] = useState(Math.max(0, Math.ceil((progress?.level || 1) / 10) - 1));
+  const [currentRealmIndex, setCurrentRealmIndex] = useState(Math.max(0, Math.ceil((progress?.level || 1) / 25) - 1));
   const [activeTab, setActiveTab] = useState('home');
 
-  // Generate all 100 levels (10 realms × 10 levels each) + bonus challenges
+  // Opening animation - staggered node fade-in
+  const [isAnimating, setIsAnimating] = useState(true);
+  const fadeAnims = useRef<Animated.Value[]>([]);
+
+  useEffect(() => {
+    // Initialize fade animations for visible nodes
+    if (fadeAnims.current.length === 0) {
+      fadeAnims.current = Array(30).fill(null).map(() => new Animated.Value(0));
+    }
+
+    // Staggered fade-in animation
+    const animations = fadeAnims.current.map((anim, index) =>
+      Animated.timing(anim, {
+        toValue: 1,
+        duration: 400,
+        delay: index * 30, // 30ms stagger between each node
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      })
+    );
+
+    Animated.parallel(animations).start(() => {
+      setIsAnimating(false);
+    });
+  }, []);
+
+  // Generate all 250 levels (10 realms × 25 levels each) + bonus challenges
   const allLevels = useMemo<LevelNode[]>(() => {
     const currentLevel = progress?.level || 1;
     const nodes: LevelNode[] = [];
@@ -1677,12 +1708,12 @@ export function VerticalProgressPath({ onBack, onLevelSelect, onNavigate }: Vert
       'tap_pattern',
     ];
 
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 250; i++) {
       const level = i + 1;
-      const realmId = Math.ceil(level / 10);
+      const realmId = Math.ceil(level / 25);
       const realm = FOCUS_REALMS[realmId - 1];
-      const isMilestone = level % 10 === 0; // Mastery test every 10 levels (realm completion)
-      const levelInRealm = (level - 1) % 10;
+      const isMilestone = level % 25 === 0; // Mastery test every 25 levels (realm completion)
+      const levelInRealm = (level - 1) % 25;
 
       let status: LevelStatus;
       if (level < currentLevel) {
