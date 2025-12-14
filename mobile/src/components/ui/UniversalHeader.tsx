@@ -8,9 +8,11 @@
 import { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useGame } from '@/contexts/GameContext';
 
 interface UniversalHeaderProps {
+  hearts: number;
+  streak: number;
+  gems: number;
   onProfilePress?: () => void;
   onBack?: () => void;
   showBackButton?: boolean;
@@ -242,13 +244,8 @@ function AnimatedValue({ value }: { value: number }) {
 // SVG import
 import Svg, { Path } from 'react-native-svg';
 
-export function UniversalHeader({ onProfilePress, onBack, showBackButton = false, title }: UniversalHeaderProps) {
+export function UniversalHeader({ hearts, streak, gems, onProfilePress, onBack, showBackButton = false, title }: UniversalHeaderProps) {
   const insets = useSafeAreaInsets();
-  const { progress, heartState } = useGame();
-
-  const currentHearts = heartState?.current || 5;
-  const streak = progress?.streak || 0;
-  const gems = progress?.xp || 0;
 
   return (
     <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
@@ -281,9 +278,9 @@ export function UniversalHeader({ onProfilePress, onBack, showBackButton = false
       {/* Right side - Hearts */}
       <View style={styles.headerStat}>
         <View style={styles.headerIconContainer}>
-          <AnimatedHeartIcon size={20} color="#FF4B4B" value={currentHearts} />
+          <AnimatedHeartIcon size={20} color="#FF4B4B" value={hearts} />
         </View>
-        <AnimatedValue value={currentHearts} />
+        <AnimatedValue value={hearts} />
       </View>
     </View>
   );
