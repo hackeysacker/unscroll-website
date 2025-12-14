@@ -1793,32 +1793,6 @@ export function VerticalProgressPath({ onBack, onLevelSelect, onNavigate }: Vert
   const [currentRealmIndex, setCurrentRealmIndex] = useState(Math.max(0, Math.ceil((progress?.level || 1) / 25) - 1));
   const [activeTab, setActiveTab] = useState<TabType>('home');
 
-  // Opening animation - staggered node fade-in
-  const [isAnimating, setIsAnimating] = useState(true);
-  const fadeAnims = useRef<Animated.Value[]>([]);
-
-  useEffect(() => {
-    // Initialize fade animations for visible nodes
-    if (fadeAnims.current.length === 0) {
-      fadeAnims.current = Array(30).fill(null).map(() => new Animated.Value(0));
-    }
-
-    // Staggered fade-in animation
-    const animations = fadeAnims.current.map((anim, index) =>
-      Animated.timing(anim, {
-        toValue: 1,
-        duration: 400,
-        delay: index * 30, // 30ms stagger between each node
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      })
-    );
-
-    Animated.parallel(animations).start(() => {
-      setIsAnimating(false);
-    });
-  }, []);
-
   // Generate all 250 levels (10 realms × 25 levels each) + bonus challenges
   const allLevels = useMemo<LevelNode[]>(() => {
     const currentLevel = progress?.level || 1;
