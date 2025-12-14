@@ -1,10 +1,14 @@
-import { generateReferralCode } from "../../../../lib/generateReferral";
-
 // Use edge runtime for Cloudflare Pages compatibility
 export const runtime = 'edge';
 
 const SUPABASE_URL = 'https://sxgpcsfwbzptlmwfddda.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4Z3Bjc2Z3YnpwdGxtd2ZkZGRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM3NTI0NzYsImV4cCI6MjA3OTMyODQ3Nn0.kkQc632Gu8ozuCD5HoZVS35yGbxA4l2kmuq96bCBg4w';
+
+// Generate referral code inline (edge runtime compatible)
+function generateReferralCode() {
+  const num = Math.floor(1000 + Math.random() * 9000);
+  return "focus" + num.toString();
+}
 
 export async function POST(request) {
   try {
