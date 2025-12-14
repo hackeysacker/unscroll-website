@@ -7,15 +7,17 @@ export const XP_PER_SESSION = 30;
 export const XP_PER_LEVEL = 200;
 export const PERFECT_FOCUS_BONUS = 10;
 export const STREAK_MULTIPLIER_THRESHOLD = 4;
-export const MAX_LEVEL = 10; // MVP has 10 levels
+export const MAX_LEVEL = 100; // Full progression: 100 levels across 10 realms
 
 // =============================================================================
 // SMOOTH DIFFICULTY SCALING SYSTEM
 // =============================================================================
 // Philosophy:
-// - Early (L1-3): Extremely easy, short, instant rewards, build confidence
-// - Middle (L4-7): Gradual challenge, one new element at a time
-// - Late (L8-10): Advanced precision, faster timing, more complexity
+// - Foundation (L1-10): Build confidence, short challenges, instant rewards
+// - Growth (L11-30): Gradual difficulty increase, one new element at a time
+// - Proficiency (L31-60): Moderate challenges, combined skills
+// - Mastery (L61-90): Advanced precision, faster timing, more complexity
+// - Excellence (L91-100): Ultimate challenges, all skills combined
 // =============================================================================
 
 export interface DifficultyParams {
@@ -54,46 +56,46 @@ export function getLevelDifficulty(level: number): DifficultyParams {
   // Normalize level to 0-1 range
   const t = (safeLevel - 1) / (MAX_LEVEL - 1);
 
-  // Duration: 5s -> 45s (exponential growth)
-  const duration = Math.round(5 + easeIn(t) * 40);
+  // Duration: 5s -> 70s (gradual growth across 100 levels)
+  const duration = Math.round(5 + easeIn(t) * 65);
 
-  // Tolerance: 2.0 -> 0.8 (very forgiving -> strict)
-  const toleranceMultiplier = 2.0 - easeOut(t) * 1.2;
+  // Tolerance: 2.5 -> 0.5 (very forgiving -> strict)
+  const toleranceMultiplier = 2.5 - easeOut(t) * 2.0;
 
-  // Speed: 0.3 -> 1.5 (very slow -> fast)
-  const speedMultiplier = 0.3 + easeIn(t) * 1.2;
+  // Speed: 0.3 -> 2.0 (very slow -> fast)
+  const speedMultiplier = 0.3 + easeIn(t) * 1.7;
 
-  // Item count: 1 -> 10 (linear growth)
-  const itemCount = Math.round(1 + linear(t) * 9);
+  // Item count: 1 -> 12 (linear growth)
+  const itemCount = Math.round(1 + linear(t) * 11);
 
-  // Distraction count: 0 -> 20 (exponential growth)
-  const distractionCount = Math.round(easeIn(t) * 20);
+  // Distraction count: 0 -> 30 (exponential growth)
+  const distractionCount = Math.round(easeIn(t) * 30);
 
   // Rule count: 1 -> 4 (stepped growth)
   const ruleCount = Math.min(4, 1 + Math.floor(t * 3));
 
-  // XP multiplier: 1.0 -> 3.0
-  const xpMultiplier = 1.0 + linear(t) * 2.0;
+  // XP multiplier: 1.0 -> 5.0 (more rewarding at higher levels)
+  const xpMultiplier = 1.0 + linear(t) * 4.0;
 
-  // Labels
+  // Labels based on 100-level progression
   let difficultyLabel: string;
   let stageLabel: string;
 
-  if (safeLevel <= 2) {
+  if (safeLevel <= 10) {
     difficultyLabel = 'Very Easy';
     stageLabel = 'Foundation';
-  } else if (safeLevel <= 4) {
+  } else if (safeLevel <= 30) {
     difficultyLabel = 'Easy';
-    stageLabel = 'Foundation';
-  } else if (safeLevel <= 6) {
+    stageLabel = 'Growth';
+  } else if (safeLevel <= 60) {
     difficultyLabel = 'Medium';
-    stageLabel = 'Building';
-  } else if (safeLevel <= 8) {
+    stageLabel = 'Proficiency';
+  } else if (safeLevel <= 90) {
     difficultyLabel = 'Hard';
-    stageLabel = 'Advancing';
+    stageLabel = 'Mastery';
   } else {
     difficultyLabel = 'Expert';
-    stageLabel = 'Mastery';
+    stageLabel = 'Excellence';
   }
 
   return {
