@@ -129,6 +129,24 @@ function SimpleAnimatedBackground({ accentColor, realmIndex, scrollProgress }: {
     ).start();
 
     Animated.loop(
+      Animated.timing(orb4Anim, {
+        toValue: 1,
+        duration: 18000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    ).start();
+
+    Animated.loop(
+      Animated.timing(orb5Anim, {
+        toValue: 1,
+        duration: 22000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    ).start();
+
+    Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1,
@@ -203,6 +221,24 @@ function SimpleAnimatedBackground({ accentColor, realmIndex, scrollProgress }: {
     outputRange: [40, 40, -40, -40, 40],
   });
 
+  const orb4TranslateX = orb4Anim.interpolate({
+    inputRange: [0, 0.25, 0.5, 0.75, 1],
+    outputRange: [-50, 0, 50, 0, -50],
+  });
+  const orb4TranslateY = orb4Anim.interpolate({
+    inputRange: [0, 0.25, 0.5, 0.75, 1],
+    outputRange: [0, -50, 0, 50, 0],
+  });
+
+  const orb5TranslateX = orb5Anim.interpolate({
+    inputRange: [0, 0.25, 0.5, 0.75, 1],
+    outputRange: [70, -70, -70, 70, 70],
+  });
+  const orb5TranslateY = orb5Anim.interpolate({
+    inputRange: [0, 0.25, 0.5, 0.75, 1],
+    outputRange: [-50, -50, 50, 50, -50],
+  });
+
   const pulseScale = pulseAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [1, 1.15],
@@ -274,6 +310,48 @@ function SimpleAnimatedBackground({ accentColor, realmIndex, scrollProgress }: {
             transform: [
               { translateX: orb3TranslateX },
               { translateY: orb3TranslateY },
+              { scale: pulseScale },
+            ],
+          },
+        ]}
+      />
+
+      {/* Orb 4 - Upper right area */}
+      <Animated.View
+        style={[
+          styles.glowOrb,
+          {
+            left: SCREEN_WIDTH * 0.75 - 80,
+            top: SCREEN_HEIGHT * 0.25 - 80,
+            width: 160,
+            height: 160,
+            borderRadius: 80,
+            backgroundColor: orbColor1,
+            opacity: 0.18,
+            transform: [
+              { translateX: orb4TranslateX },
+              { translateY: orb4TranslateY },
+              { scale: pulseScale },
+            ],
+          },
+        ]}
+      />
+
+      {/* Orb 5 - Lower left area */}
+      <Animated.View
+        style={[
+          styles.glowOrb,
+          {
+            left: SCREEN_WIDTH * 0.15 - 85,
+            top: SCREEN_HEIGHT * 0.55 - 85,
+            width: 170,
+            height: 170,
+            borderRadius: 85,
+            backgroundColor: orbColor2,
+            opacity: 0.15,
+            transform: [
+              { translateX: orb5TranslateX },
+              { translateY: orb5TranslateY },
               { scale: pulseScale },
             ],
           },
