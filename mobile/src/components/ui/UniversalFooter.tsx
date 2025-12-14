@@ -137,19 +137,26 @@ function TabButton({
       style={styles.tabButton}
       activeOpacity={0.7}
     >
+      {/* Outer view for scale (native driver) */}
       <Animated.View
-        style={[
-          styles.tabButtonInner,
-          {
-            transform: [{ scale: scaleAnim }],
-            backgroundColor,
-          },
-        ]}
+        style={{
+          transform: [{ scale: scaleAnim }],
+        }}
       >
-        <Icon isActive={isActive} size={24} />
-        <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
-          {label}
-        </Text>
+        {/* Inner view for backgroundColor (non-native driver) */}
+        <Animated.View
+          style={[
+            styles.tabButtonInner,
+            {
+              backgroundColor,
+            },
+          ]}
+        >
+          <Icon isActive={isActive} size={24} />
+          <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
+            {label}
+          </Text>
+        </Animated.View>
       </Animated.View>
     </TouchableOpacity>
   );
