@@ -14,275 +14,209 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Database types for TypeScript
+// Database types for TypeScript - Updated to match new schema
 export type Database = {
   public: {
     Tables: {
-      profiles: {
+      user_profiles: {
         Row: {
           id: string;
-          email: string | null;
+          username: string | null;
+          avatar_name: string | null;
           created_at: string;
-          goal: string | null;
-          is_premium: boolean;
           updated_at: string;
-        };
-        Insert: {
-          id: string;
-          email?: string | null;
-          created_at?: string;
-          goal?: string | null;
-          is_premium?: boolean;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          email?: string | null;
-          created_at?: string;
-          goal?: string | null;
-          is_premium?: boolean;
-          updated_at?: string;
-        };
-      };
-      user_onboarding: {
-        Row: {
-          user_id: string;
-          daily_scroll_hours: number | null;
-          primary_distraction_app: string | null;
-          worst_scroll_time: string | null;
-          improvement_reason: string | null;
-          wants_auto_tracking: boolean | null;
-          baseline_score: number | null;
-          goal_result: string | null;
-          daily_training_minutes: number | null;
-          personality_type: string | null;
-          notifications_accepted: boolean | null;
-          screentime_accepted: boolean | null;
-          daily_checkin_accepted: boolean | null;
-          completed_at: string | null;
-          updated_at: string;
-        };
-        Insert: {
-          user_id: string;
-          daily_scroll_hours?: number | null;
-          primary_distraction_app?: string | null;
-          worst_scroll_time?: string | null;
-          improvement_reason?: string | null;
-          wants_auto_tracking?: boolean | null;
-          baseline_score?: number | null;
-          goal_result?: string | null;
-          daily_training_minutes?: number | null;
-          personality_type?: string | null;
-          notifications_accepted?: boolean | null;
-          screentime_accepted?: boolean | null;
-          daily_checkin_accepted?: boolean | null;
-          completed_at?: string | null;
-          updated_at?: string;
-        };
-        Update: {
-          user_id?: string;
-          daily_scroll_hours?: number | null;
-          primary_distraction_app?: string | null;
-          worst_scroll_time?: string | null;
-          improvement_reason?: string | null;
-          wants_auto_tracking?: boolean | null;
-          baseline_score?: number | null;
-          goal_result?: string | null;
-          daily_training_minutes?: number | null;
-          personality_type?: string | null;
-          notifications_accepted?: boolean | null;
-          screentime_accepted?: boolean | null;
-          daily_checkin_accepted?: boolean | null;
-          completed_at?: string | null;
-          updated_at?: string;
-        };
-      };
-      game_progress: {
-        Row: {
-          user_id: string;
-          level: number;
-          xp: number;
+          onboarding_completed: boolean;
           total_xp: number;
-          streak: number;
-          longest_streak: number;
-          last_session_date: string | null;
-          streak_freeze_used: boolean;
-          total_sessions_completed: number;
-          total_challenges_completed: number;
-          updated_at: string;
+          current_level: number;
+          streak_days: number;
+          last_activity_date: string | null;
+          hearts: number;
+          gems: number;
+          notifications_enabled: boolean;
+          sound_enabled: boolean;
+          haptics_enabled: boolean;
         };
         Insert: {
-          user_id: string;
-          level?: number;
-          xp?: number;
-          total_xp?: number;
-          streak?: number;
-          longest_streak?: number;
-          last_session_date?: string | null;
-          streak_freeze_used?: boolean;
-          total_sessions_completed?: number;
-          total_challenges_completed?: number;
+          id: string;
+          username?: string | null;
+          avatar_name?: string | null;
+          created_at?: string;
           updated_at?: string;
+          onboarding_completed?: boolean;
+          total_xp?: number;
+          current_level?: number;
+          streak_days?: number;
+          last_activity_date?: string | null;
+          hearts?: number;
+          gems?: number;
+          notifications_enabled?: boolean;
+          sound_enabled?: boolean;
+          haptics_enabled?: boolean;
         };
         Update: {
-          user_id?: string;
-          level?: number;
-          xp?: number;
-          total_xp?: number;
-          streak?: number;
-          longest_streak?: number;
-          last_session_date?: string | null;
-          streak_freeze_used?: boolean;
-          total_sessions_completed?: number;
-          total_challenges_completed?: number;
+          id?: string;
+          username?: string | null;
+          avatar_name?: string | null;
+          created_at?: string;
           updated_at?: string;
+          onboarding_completed?: boolean;
+          total_xp?: number;
+          current_level?: number;
+          streak_days?: number;
+          last_activity_date?: string | null;
+          hearts?: number;
+          gems?: number;
+          notifications_enabled?: boolean;
+          sound_enabled?: boolean;
+          haptics_enabled?: boolean;
         };
       };
-      skill_progress: {
+      waitlist: {
         Row: {
-          user_id: string;
-          focus_score: number;
-          impulse_control_score: number;
-          distraction_resistance_score: number;
-          updated_at: string;
+          id: string;
+          email: string;
+          referral_code: string;
+          signup_source: string | null;
+          marketing_source: string | null;
+          marketing_campaign: string | null;
+          referral_code_used: string | null;
+          position: number | null;
+          joined_at: string;
         };
         Insert: {
-          user_id: string;
-          focus_score?: number;
-          impulse_control_score?: number;
-          distraction_resistance_score?: number;
-          updated_at?: string;
+          id?: string;
+          email: string;
+          referral_code: string;
+          signup_source?: string | null;
+          marketing_source?: string | null;
+          marketing_campaign?: string | null;
+          referral_code_used?: string | null;
+          position?: number | null;
+          joined_at?: string;
         };
         Update: {
-          user_id?: string;
-          focus_score?: number;
-          impulse_control_score?: number;
-          distraction_resistance_score?: number;
-          updated_at?: string;
+          id?: string;
+          email?: string;
+          referral_code?: string;
+          signup_source?: string | null;
+          marketing_source?: string | null;
+          marketing_campaign?: string | null;
+          referral_code_used?: string | null;
+          position?: number | null;
+          joined_at?: string;
         };
       };
-      challenge_results: {
+      challenges: {
+        Row: {
+          id: string;
+          challenge_type: string;
+          name: string;
+          description: string | null;
+          category: string;
+          difficulty: string;
+          base_xp: number;
+          max_level: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          challenge_type: string;
+          name: string;
+          description?: string | null;
+          category: string;
+          difficulty?: string;
+          base_xp?: number;
+          max_level?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          challenge_type?: string;
+          name?: string;
+          description?: string | null;
+          category?: string;
+          difficulty?: string;
+          base_xp?: number;
+          max_level?: number;
+          created_at?: string;
+        };
+      };
+      challenge_attempts: {
         Row: {
           id: string;
           user_id: string;
           challenge_type: string;
-          timestamp: string;
+          level: number;
           score: number;
-          duration: number;
-          xp_earned: number;
+          duration_ms: number;
           is_perfect: boolean;
-          created_at: string;
+          is_passed: boolean;
+          xp_earned: number;
+          accuracy: number | null;
+          reaction_time_ms: number | null;
+          attempted_at: string;
         };
         Insert: {
           id?: string;
           user_id: string;
           challenge_type: string;
-          timestamp?: string;
+          level: number;
           score: number;
-          duration: number;
-          xp_earned: number;
+          duration_ms: number;
           is_perfect?: boolean;
-          created_at?: string;
+          is_passed?: boolean;
+          xp_earned: number;
+          accuracy?: number | null;
+          reaction_time_ms?: number | null;
+          attempted_at?: string;
         };
         Update: {
           id?: string;
           user_id?: string;
           challenge_type?: string;
-          timestamp?: string;
+          level?: number;
           score?: number;
-          duration?: number;
-          xp_earned?: number;
+          duration_ms?: number;
           is_perfect?: boolean;
-          created_at?: string;
+          is_passed?: boolean;
+          xp_earned?: number;
+          accuracy?: number | null;
+          reaction_time_ms?: number | null;
+          attempted_at?: string;
         };
       };
-      daily_sessions: {
+      user_progress: {
         Row: {
           id: string;
           user_id: string;
-          date: string;
-          total_xp: number;
-          completed: boolean;
-          created_at: string;
+          challenge_type: string;
+          current_level: number;
+          highest_score: number;
+          total_attempts: number;
+          total_perfect: number;
+          total_passed: number;
+          updated_at: string;
         };
         Insert: {
           id?: string;
           user_id: string;
-          date: string;
-          total_xp?: number;
-          completed?: boolean;
-          created_at?: string;
+          challenge_type: string;
+          current_level?: number;
+          highest_score?: number;
+          total_attempts?: number;
+          total_perfect?: number;
+          total_passed?: number;
+          updated_at?: string;
         };
         Update: {
           id?: string;
           user_id?: string;
-          date?: string;
-          total_xp?: number;
-          completed?: boolean;
-          created_at?: string;
-        };
-      };
-      user_stats: {
-        Row: {
-          user_id: string;
-          total_attention_time: number;
-          longest_gaze_hold: number;
-          focus_accuracy: number;
-          impulse_control_score: number;
-          stability_rating: number;
-          updated_at: string;
-        };
-        Insert: {
-          user_id: string;
-          total_attention_time?: number;
-          longest_gaze_hold?: number;
-          focus_accuracy?: number;
-          impulse_control_score?: number;
-          stability_rating?: number;
-          updated_at?: string;
-        };
-        Update: {
-          user_id?: string;
-          total_attention_time?: number;
-          longest_gaze_hold?: number;
-          focus_accuracy?: number;
-          impulse_control_score?: number;
-          stability_rating?: number;
-          updated_at?: string;
-        };
-      };
-      heart_state: {
-        Row: {
-          user_id: string;
-          current_hearts: number;
-          max_hearts: number;
-          last_heart_lost: string | null;
-          last_midnight_reset: string | null;
-          perfect_streak_count: number;
-          total_lost: number;
-          total_gained: number;
-          updated_at: string;
-        };
-        Insert: {
-          user_id: string;
-          current_hearts?: number;
-          max_hearts?: number;
-          last_heart_lost?: string | null;
-          last_midnight_reset?: string | null;
-          perfect_streak_count?: number;
-          total_lost?: number;
-          total_gained?: number;
-          updated_at?: string;
-        };
-        Update: {
-          user_id?: string;
-          current_hearts?: number;
-          max_hearts?: number;
-          last_heart_lost?: string | null;
-          last_midnight_reset?: string | null;
-          perfect_streak_count?: number;
-          total_lost?: number;
-          total_gained?: number;
+          challenge_type?: string;
+          current_level?: number;
+          highest_score?: number;
+          total_attempts?: number;
+          total_perfect?: number;
+          total_passed?: number;
           updated_at?: string;
         };
       };
@@ -291,53 +225,117 @@ export type Database = {
           id: string;
           user_id: string;
           badge_type: string;
-          unlocked_at: string;
           name: string;
           description: string;
           icon: string;
+          tier: string;
+          unlocked_at: string;
         };
         Insert: {
           id?: string;
           user_id: string;
           badge_type: string;
-          unlocked_at?: string;
           name: string;
           description: string;
           icon: string;
+          tier?: string;
+          unlocked_at?: string;
         };
         Update: {
           id?: string;
           user_id?: string;
           badge_type?: string;
-          unlocked_at?: string;
           name?: string;
           description?: string;
           icon?: string;
+          tier?: string;
+          unlocked_at?: string;
         };
       };
-      user_settings: {
+      badge_progress: {
         Row: {
+          id: string;
           user_id: string;
-          vibration_enabled: boolean;
-          sound_enabled: boolean;
-          dark_mode: boolean;
-          notifications_enabled: boolean;
+          badge_type: string;
+          current_progress: number;
+          target_progress: number;
           updated_at: string;
         };
         Insert: {
+          id?: string;
           user_id: string;
-          vibration_enabled?: boolean;
-          sound_enabled?: boolean;
-          dark_mode?: boolean;
-          notifications_enabled?: boolean;
+          badge_type: string;
+          current_progress?: number;
+          target_progress: number;
           updated_at?: string;
         };
         Update: {
+          id?: string;
           user_id?: string;
-          vibration_enabled?: boolean;
-          sound_enabled?: boolean;
-          dark_mode?: boolean;
-          notifications_enabled?: boolean;
+          badge_type?: string;
+          current_progress?: number;
+          target_progress?: number;
+          updated_at?: string;
+        };
+      };
+      daily_stats: {
+        Row: {
+          id: string;
+          user_id: string;
+          date: string;
+          challenges_completed: number;
+          total_xp_earned: number;
+          perfect_challenges: number;
+          total_practice_time_ms: number;
+          best_score: number;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          date: string;
+          challenges_completed?: number;
+          total_xp_earned?: number;
+          perfect_challenges?: number;
+          total_practice_time_ms?: number;
+          best_score?: number;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          date?: string;
+          challenges_completed?: number;
+          total_xp_earned?: number;
+          perfect_challenges?: number;
+          total_practice_time_ms?: number;
+          best_score?: number;
+        };
+      };
+      leaderboard: {
+        Row: {
+          id: string;
+          user_id: string;
+          period: string;
+          total_xp: number;
+          rank: number | null;
+          challenges_completed: number;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          period: string;
+          total_xp?: number;
+          rank?: number | null;
+          challenges_completed?: number;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          period?: string;
+          total_xp?: number;
+          rank?: number | null;
+          challenges_completed?: number;
           updated_at?: string;
         };
       };
