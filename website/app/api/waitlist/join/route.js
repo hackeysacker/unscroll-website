@@ -1,3 +1,5 @@
+import { NextResponse } from 'next/server';
+
 // Use edge runtime for Cloudflare Pages compatibility
 export const runtime = 'edge';
 
@@ -16,19 +18,13 @@ export async function POST(request) {
     const { email, signupSource, marketingSource, marketingCampaign, referralCodeUsed } = body;
 
     if (!email) {
-      return new Response(JSON.stringify({ ok: false, error: 'Email is required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return NextResponse.json({ ok: false, error: 'Email is required' }, { status: 400 });
     }
 
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return new Response(JSON.stringify({ ok: false, error: 'Invalid email format' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return NextResponse.json({ ok: false, error: 'Invalid email format' }, { status: 400 });
     }
 
     const referralCode = generateReferralCode();
@@ -69,45 +65,30 @@ export async function POST(request) {
           errorData?.message?.includes('relation') ||
           errorData?.message?.includes('does not exist') ||
           errorData?.code === 'PGRST116') {
-        return new Response(JSON.stringify({
+        return NextResponse.json({
           ok: false,
           error: 'Database table not found. Please run the SQL migration in Supabase.'
-        }), {
-          status: 500,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        }, { status: 500 });
       }
       if (insertResponse.status === 425 || insertResponse.status === 401 ||
           errorData?.message?.includes('permission denied') ||
           errorData?.code === '42501') {
-        return new Response(JSON.stringify({
+        return NextResponse.json({
           ok: false,
           error: 'Permission denied. Please check Row Level Security policies in Supabase.'
-        }), {
-          status: 500,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        }, { status: 500 });
       }
-      return new Response(JSON.stringify({
+      return NextResponse.json({
         ok: false,
         error: errorData?.message || errorData?.error || `Failed to save to database (${insertResponse.status}: ${insertResponse.statusText})`
-      }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      }, { status: 500 });
     }
 
-    return new Response(JSON.stringify({ ok: true, referralCode }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return NextResponse.json({ ok: true, referralCode });
   } catch (error) {
-    return new Response(JSON.stringify({
+    return NextResponse.json({
       ok: false,
       error: 'Server error: ' + (error.message || String(error))
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, { status: 500 });
   }
 }
